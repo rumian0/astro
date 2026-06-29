@@ -1,46 +1,44 @@
 export const SITE = {
-  website: "https://devosfera.vercel.app/",
-  author: "Andrés Ujpán",
-  profile: process.env.PUBLIC_SOCIAL_GITHUB ?? "", // set in .env
-  desc: "A space where curiosity becomes code. Exploring web development, software architecture and everything that makes the tech world spin.",
-  title: "Astro Devosfera",
-  ogImage: "devosfera-og.webp", // located in the public folder
+  website: "https://mingcy.cn/",
+  author: "茗辰原",
+  profile: process.env.PUBLIC_SOCIAL_GITHUB ?? "",
+  desc: "茶香四溢,编程世界.",
+  title: "茗辰原",
+  ogImage: "devosfera-og.webp",
   lightAndDarkMode: true,
   postPerIndex: 6,
   postPerPage: 12,
-  scheduledPostMargin: 15 * 60 * 1000, // 15 minutes
+  scheduledPostMargin: 15 * 60 * 1000,
   showArchives: true,
-  showGalleries: true,
-  showGalleriesInIndex: true, // Show galleries in the general paginated list (only if showGalleries is true)
-  showBackButton: true, // show back button in post detail
-  showTagsInCards: true, // show tag pills at the bottom of post cards
-  showCoverImages: false, // show cover images (OG) in post cards (requires pnpm build in dev mode)
-  indexPostsGrid: false, // show recent/featured posts in grid layout on the home page (like /posts page)
+  showGalleries: false,
+  showGalleriesInIndex: false,
+  showBackButton: true,
+  showTagsInCards: true,
+  showCoverImages: false,
+  indexPostsGrid: false,
   heroTerminalPrompt: {
-    prefix: "~", // highlighted part on the left
-    path: "/ready-to-go", // central prompt text
-    suffix: "$", // terminal symbol on the right
+    prefix: "茗",
+    path: "/cheng-yuan",
+    suffix: "$",
   },
   backdropEffects: {
-    cursorGlow: true, // cursor tracking with soft halo
-    grain: true, // background visual noise layer
+    cursorGlow: true,
+    grain: true,
   },
   editPost: {
     enabled: true,
-    text: "Edit this post",
-    url: process.env.PUBLIC_EDIT_POST_URL ?? "", // set in .env
+    text: "编辑此文章",
+    url: process.env.PUBLIC_EDIT_POST_URL ?? "",
   },
   dynamicOgImage: true,
-  dir: "ltr", // "rtl" | "auto"
-  lang: "en", // html lang code. Set this empty and default will be "en"
-  timezone: "America/Guatemala", // Default global timezone (IANA format) https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  dir: "ltr",
+  lang: "zh-CN",
+  timezone: "Asia/Shanghai",
   introAudio: {
-    enabled: true, // show/hide intro player in home and compact player while navigating
-    // src: path to file (relative to /public or absolute URL). Example: "/intro.mp3" or "https://example.com/stream"
-    src: "https://fluxfm.streamabc.net/flx-chillhop-mp3-128-8581707",
-    // src: "/audio/intro-web.mp3",
-    isStream: true, // true for radio/live stream URLs (example: https://fluxfm.streamabc.net/flx-chillhop-mp3-128-8581707)
-    label: "LOFI", // display label in player
-    duration: 30, // duration in seconds (used for local files, ignored on streams)
+    enabled: false,
+    src: "",
+    isStream: false,
+    label: "",
+    duration: 0,
   },
 } as const;

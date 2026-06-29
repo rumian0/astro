@@ -9,6 +9,7 @@ import ShareLinks from "@/components/ShareLinks.astro";
 import Breadcrumb from "@/components/Breadcrumb.astro";
 import BackToTopButton from "@/components/BackToTopButton.astro";
 import GalleryEmbed from "@/components/GalleryEmbed.astro";
+import Twikoo from "@/components/Twikoo.astro";
 import { getPath } from "@/utils/getPath";
 import { slugifyStr } from "@/utils/slugify";
 import { getReadingTime } from "@/utils/readingTime";
@@ -322,6 +323,7 @@ const nextPost =
       }
     </div>
   </main>
+  <Twikoo />
   <BackToTopButton />
   <Footer />
 </Layout>

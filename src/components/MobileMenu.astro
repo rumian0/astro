@@ -52,6 +52,34 @@ const isActive = (path: string) => {
             <span class="mobile-nav-indicator"></span>
             <span>About</span>
           </a>
+          <!-- Mobile Links Section (no submenu, flat links) -->
+          <div class="mobile-nav-section px-4 pt-2 pb-1" style="--i:3">
+            <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">友链</span>
+          </div>
+          <a
+            href="/links/"
+            class:list={["mobile-nav-link pl-8", { active: isActive("/links/") && !isActive("/links/fcircle/") && !isActive("/links/apply/") }]}
+            style="--i:3"
+          >
+            <span class="mobile-nav-indicator"></span>
+            <span>友链展示</span>
+          </a>
+          <a
+            href="/links/fcircle/"
+            class:list={["mobile-nav-link pl-8", { active: isActive("/links/fcircle/") }]}
+            style="--i:4"
+          >
+            <span class="mobile-nav-indicator"></span>
+            <span>友圈动态</span>
+          </a>
+          <a
+            href="/links/apply/"
+            class:list={["mobile-nav-link pl-8", { active: isActive("/links/apply/") }]}
+            style="--i:5"
+          >
+            <span class="mobile-nav-indicator"></span>
+            <span>申请友链</span>
+          </a>
           {
             SITE.showArchives && (
               <a
@@ -60,7 +88,7 @@ const isActive = (path: string) => {
                   "mobile-nav-link",
                   { active: isActive("/archives") },
                 ]}
-                style="--i:3"
+                style="--i:6"
               >
                 <span class="mobile-nav-indicator" />
                 <span>Archives</span>
@@ -75,7 +103,7 @@ const isActive = (path: string) => {
                   "mobile-nav-link",
                   { active: isActive("/galleries") },
                 ]}
-                style="--i:4"
+                style="--i:7"
               >
                 <span class="mobile-nav-indicator" />
                 <span>Galleries</span>

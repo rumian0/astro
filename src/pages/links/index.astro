@@ -1,0 +1,29 @@
+---
+import Layout from "@/layouts/Layout.astro";
+const res = await fetch("https://a.mingcy.cn/js/friend.json");
+const data = await res.json();
+const friends = data.friends || [];
+---
+
+<Layout title="友链 - 茗辰原" description="茗辰原的友链展示">
+  <main class="mx-auto max-w-5xl px-4 py-12">
+    <h1 class="mb-2 text-center text-3xl font-bold text-white">🌸 友链</h1>
+    <p class="mb-8 text-center text-gray-400">认识我的朋友们</p>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+      {friends.map(([name, url, avatar]: string[]) => (
+        <a href={url} target="_blank" rel="noopener"
+          class="glass-card group flex items-center gap-4 rounded-xl p-4 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/10">
+          <img src={avatar} alt={name} class="h-12 w-12 flex-shrink-0 rounded-full object-cover" loading="lazy"/>
+          <div class="min-w-0">
+            <p class="truncate font-medium text-white group-hover:text-cyan-300">{name}</p>
+            <p class="truncate text-xs text-gray-500">{new URL(url).hostname}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </main>
+</Layout>
+
+<style is:global>
+  .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); }
+</style>

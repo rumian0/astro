@@ -108,6 +108,17 @@ const isActive = (path: string) => {
                 >About</a
               >
             </li>
+            <li class="nav-dropdown relative">
+              <button class="nav-link nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+                友链
+                <svg class="ml-1 size-3 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <div class="nav-dropdown-menu absolute right-0 top-full mt-1 min-w-36 rounded-xl border border-white/10 bg-background/90 p-1.5 opacity-0 shadow-xl backdrop-blur-2xl transition-all duration-200 invisible translate-y-1">
+                <a href="/links/" class="block rounded-lg px-3 py-2 text-sm text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent">友链展示</a>
+                <a href="/links/fcircle/" class="block rounded-lg px-3 py-2 text-sm text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent">友圈动态</a>
+                <a href="/links/apply/" class="block rounded-lg px-3 py-2 text-sm text-foreground/80 transition-colors hover:bg-accent/10 hover:text-accent">申请友链</a>
+              </div>
+            </li>
             <li class="flex items-center">
               <a
                 href="/search"
@@ -458,6 +469,16 @@ const isActive = (path: string) => {
     transform: rotate(-45deg);
   }
 
+  /* ─── Dropdown Menu ─── */
+  .nav-dropdown:hover .nav-dropdown-menu,
+  .nav-dropdown-trigger[aria-expanded="true"] + .nav-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .nav-dropdown:hover .nav-dropdown-trigger svg {
+    transform: rotate(180deg);
+  }
 
 </style>
 

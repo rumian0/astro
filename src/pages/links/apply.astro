@@ -1,0 +1,59 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Twikoo from "@/components/Twikoo.astro";
+---
+
+<Layout title="申请友链 - 茗辰原" description="申请与茗辰原交换友链">
+  <main class="mx-auto max-w-3xl px-4 py-12">
+    <h1 class="mb-2 text-center text-3xl font-bold text-white">🤝 申请友链</h1>
+    <p class="mb-8 text-center text-gray-400">想和茗辰原交换友链？欢迎申请！</p>
+
+    <div class="glass-card mb-6 rounded-2xl p-6">
+      <h2 class="mb-3 text-lg font-bold text-cyan-300">📋 申请流程</h2>
+      <ol class="list-inside list-decimal space-y-2 text-gray-300">
+        <li>确认贵站符合基本要求，先添加本站友链</li>
+        <li>按下方格式整理站点信息</li>
+        <li>在页面底部评论区提交申请，审核通过后添加</li>
+      </ol>
+    </div>
+
+    <div class="glass-card mb-6 rounded-2xl p-6">
+      <h2 class="mb-3 text-lg font-bold text-cyan-300">📌 友链要求</h2>
+      <ul class="list-inside list-disc space-y-1 text-sm text-gray-300">
+        <li>优先接受个人博客、技术笔记、生活记录</li>
+        <li>站点应能稳定访问，建议启用 HTTPS</li>
+        <li>内容原创或认真整理，避免整站搬运</li>
+        <li>不得包含违法违规、色情、赌博等内容</li>
+        <li>申请前请先添加本站友链</li>
+      </ul>
+    </div>
+
+    <div class="glass-card mb-6 rounded-2xl p-6">
+      <h2 class="mb-3 text-lg font-bold text-cyan-300">ℹ️ 本站信息</h2>
+      <pre class="overflow-x-auto rounded-lg bg-black/30 p-4 text-sm text-gray-300">
+name: 茗辰原
+link: https://mingcy.cn/
+avatar: https://mingcy.cn/image/mcy.png
+descr: 茶香四溢,编程世界
+atom: https://mingcy.cn/atom.xml</pre>
+      <p class="mt-2 text-xs text-gray-500">请先在贵站添加本站友链，然后在评论区按格式提交申请。</p>
+    </div>
+
+    <div class="glass-card mb-6 rounded-2xl p-6">
+      <h2 class="mb-3 text-lg font-bold text-cyan-300">📝 申请格式</h2>
+      <p class="mb-2 text-sm text-gray-400">在评论区按如下格式提交：</p>
+      <pre class="overflow-x-auto rounded-lg bg-black/30 p-4 text-sm text-gray-300">
+name: 站点名称
+link: 站点地址
+avatar: 头像地址
+descr: 一句话描述
+siteshot: 站点截图（可选）</pre>
+    </div>
+
+    <Twikoo />
+  </main>
+</Layout>
+
+<style is:global>
+  .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); }
+</style>
