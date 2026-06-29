@@ -198,3 +198,122 @@ i {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
   box-shadow: 0 4px 15px color-mix(in srgb, var(--accent) 15%, transparent);
 }
+
+/* ═══════ Twikoo Comment Beautification ═══════ */
+
+#twikoo {
+  @apply app-layout mt-10 mb-4;
+  font-family: var(--font-app);
+}
+
+#twikoo * {
+  font-family: inherit;
+}
+
+/* ── Input area ── */
+#twikoo .el-textarea textarea {
+  border: 1px solid color-mix(in srgb, var(--border) 30%, transparent) !important;
+  border-radius: 1rem !important;
+  background: color-mix(in srgb, var(--foreground) 3%, var(--background)) !important;
+  color: var(--foreground) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
+  padding: 1rem !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 12px -4px color-mix(in srgb, var(--background) 50%, transparent) !important;
+}
+
+#twikoo .el-textarea textarea:focus {
+  outline: none !important;
+  border-color: var(--accent) !important;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 4px 24px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+#twikoo .el-textarea textarea::placeholder {
+  color: color-mix(in srgb, var(--foreground) 35%, transparent) !important;
+}
+
+/* ── Buttons ── */
+#twikoo .tk-action-btn,
+#twikoo .tk-btn {
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent) !important;
+  border-radius: 2rem !important;
+  background: color-mix(in srgb, var(--accent) 8%, transparent) !important;
+  color: var(--accent) !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  padding: 0.4rem 1.2rem !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer;
+}
+
+#twikoo .tk-action-btn:hover,
+#twikoo .tk-btn:hover {
+  background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
+  box-shadow: 0 4px 15px color-mix(in srgb, var(--accent) 15%, transparent) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Comment card ── */
+#twikoo .tk-comment {
+  border: 1px solid color-mix(in srgb, var(--border) 20%, transparent) !important;
+  border-radius: 1rem !important;
+  background: color-mix(in srgb, var(--foreground) 2%, var(--background)) !important;
+  padding: 1.25rem !important;
+  margin-bottom: 0.75rem !important;
+  transition: all 0.2s ease;
+}
+
+#twikoo .tk-comment:hover {
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent) !important;
+  box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--accent) 10%, transparent) !important;
+}
+
+/* ── Avatar ── */
+#twikoo .tk-avatar {
+  border-radius: 0.75rem !important;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 15%, transparent) !important;
+}
+
+#twikoo .tk-avatar img {
+  border-radius: 0.75rem !important;
+}
+
+/* ── Author name ── */
+#twikoo .tk-author {
+  color: var(--accent) !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+}
+
+/* ── Time ── */
+#twikoo .tk-time {
+  color: color-mix(in srgb, var(--foreground) 40%, transparent) !important;
+  font-size: 0.75rem !important;
+}
+
+/* ── Content text ── */
+#twikoo .tk-content {
+  color: var(--foreground) !important;
+  line-height: 1.7 !important;
+  font-size: 0.9rem !important;
+}
+
+/* ── Replies indent ── */
+#twikoo .tk-replies {
+  margin-left: 0.5rem !important;
+  padding-left: 1rem !important;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 15%, transparent) !important;
+}
+
+/* ── Dark mode overrides ── */
+html[data-theme="dark"] #twikoo .el-textarea textarea {
+  background: color-mix(in srgb, var(--foreground) 5%, var(--background)) !important;
+}
+
+html[data-theme="dark"] #twikoo .tk-comment {
+  background: color-mix(in srgb, var(--foreground) 3%, var(--background)) !important;
+}

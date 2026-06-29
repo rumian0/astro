@@ -1,137 +1,185 @@
 ---
-interface Heading {
-  depth: number;
-  slug: string;
-  text: string;
-}
-
-interface Props {
-  headings?: Heading[];
-}
-
-const { headings = [] } = Astro.props;
-
-interface TocItem {
-  indent: number;
-  slug: string;
-  text: string;
-}
-
-const items: TocItem[] = headings
-  .filter((h) => h.depth >= 1 && h.depth <= 5)
-  .map((h) => ({
-    indent: h.depth - 1,
-    slug: h.slug,
-    text: h.text,
-  }));
+// Self-contained floating TOC button + slide-out panel
+// Extracts h1~h6 from #article via client-side JS
 ---
 
-{
-  items.length > 0 && (
-    <nav class="toc-root w-full">
-      <h2 class="mb-3 font-firacode text-xs font-semibold tracking-widest text-foreground/40 uppercase">
-        目录
-      </h2>
-      <div id="toc-list" class="toc-list flex flex-col">
-        {
-          items.map((item) => (
-            <a
-              href={`#${item.slug}`}
-              class="toc-link group relative flex items-start text-foreground/70 no-underline transition-all duration-200 hover:text-accent"
-              data-indent={item.indent}
-            >
-              {Array.from({ length: item.indent }, (_, _level) => (
-                <span class="toc-line-col flex w-5 shrink-0 flex-col items-center self-stretch">
-                  <span class="toc-line h-full w-px bg-border/30 transition-colors duration-200"></span>
-                </span>
-              ))}
-              <span class="toc-dot mt-[5px] flex w-4 shrink-0 items-center justify-center">
-                <span class="toc-dot-inner block"></span>
-              </span>
-              <span class="toc-text flex-1 py-1.5 text-sm leading-[1.4]">
-                {item.text}
-              </span>
-            </a>
-          ))
-        }
+<div id="toc-float-container">
+  <button
+    id="toc-float-btn"
+    type="button"
+    aria-label="打开目录"
+    title="打开目录"
+    class="fixed end-4 bottom-24 z-50 md:end-8 md:bottom-28 flex size-14 md:size-16 items-center justify-center rounded-full border border-accent/15 bg-background/75 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.20)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.60)] transition-all duration-200 hover:scale-105 hover:shadow-[0_6px_28px_rgba(0,0,0,0.30)] dark:hover:shadow-[0_6px_28px_rgba(0,0,0,0.75)] active:scale-95 motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
+  >
+    <svg class="size-5 md:size-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="15" y2="12"/>
+      <line x1="3" y1="18" x2="18" y2="18"/>
+    </svg>
+    <span class="sr-only">打开目录</span>
+  </button>
 
-        <a
-          href="#tcomment"
-          class="toc-link group relative flex items-start text-foreground/70 no-underline transition-all duration-200 hover:text-accent"
-          data-indent="1"
-          data-comment
-        >
-          <span class="toc-line-col flex w-5 shrink-0 flex-col items-center self-stretch">
-            <span class="toc-line h-full w-px bg-border/30 transition-colors duration-200"></span>
-          </span>
-          <span class="toc-dot mt-[5px] flex w-4 shrink-0 items-center justify-center">
-            <span class="toc-dot-inner block"></span>
-          </span>
-          <span class="toc-text flex-1 py-1.5 text-sm leading-[1.4]">
-            评论
-          </span>
-        </a>
-      </div>
-    </nav>
-  )
-}
+  <div id="toc-backdrop" class="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <div id="toc-panel" class="fixed top-0 right-0 z-50 h-full w-72 md:w-80 translate-x-full bg-background border-l border-border/20 shadow-2xl transition-transform duration-300 ease-out">
+    <div class="flex items-center justify-between px-6 py-5 border-b border-border/15">
+      <h2 class="font-firacode text-xs font-semibold tracking-widest text-foreground/40 uppercase">目录</h2>
+      <button id="toc-close-btn" type="button" aria-label="关闭目录" class="flex size-8 items-center justify-center rounded-full text-foreground/50 hover:text-foreground hover:bg-border/10 transition-all">
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav id="toc-panel-list" class="overflow-y-auto px-4 py-4 max-h-[calc(100vh-5rem)]"></nav>
+  </div>
+</div>
 
 <script>
-  const tocLinks = document.querySelectorAll<HTMLAnchorElement>(".toc-link");
-  const headings = document.querySelectorAll<HTMLElement>(
-    "#article h1, #article h2, #article h3, #article h4, #article h5"
-  );
+(() => {
+  const btn = document.getElementById('toc-float-btn');
+  const backdrop = document.getElementById('toc-backdrop');
+  const panel = document.getElementById('toc-panel');
+  const closeBtn = document.getElementById('toc-close-btn');
+  const list = document.getElementById('toc-panel-list');
 
-  if (headings.length > 0 && tocLinks.length > 0) {
-    let activeId: string | null = null;
+  if (!btn || !backdrop || !panel || !closeBtn || !list) return;
 
-    const setActive = (id: string | null) => {
-      if (id === activeId) return;
-      activeId = id;
-      tocLinks.forEach((link) => {
-        const href = link.getAttribute("href");
-        if (href && id && href === "#" + id) {
-          link.setAttribute("data-active", "");
-        } else {
-          link.removeAttribute("data-active");
-        }
-      });
-    };
+  const open = () => {
+    backdrop.classList.remove('opacity-0', 'pointer-events-none');
+    panel.classList.remove('translate-x-full');
+  };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        let topmost: string | null = null;
-        let topmostY = Infinity;
+  const close = () => {
+    backdrop.classList.add('opacity-0', 'pointer-events-none');
+    panel.classList.add('translate-x-full');
+  };
 
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const y = entry.boundingClientRect.top;
-            if (y < topmostY) {
-              topmostY = y;
-              topmost = entry.target.id;
-            }
-          }
-        }
+  btn.addEventListener('click', () => {
+    if (panel.classList.contains('translate-x-full')) open();
+    else close();
+  });
 
-        if (topmost) {
-          setActive(topmost);
-        }
-      },
-      {
-        rootMargin: "-80px 0px -70% 0px",
-      }
-    );
+  closeBtn.addEventListener('click', close);
+  backdrop.addEventListener('click', close);
 
-    headings.forEach((h) => observer.observe(h));
+  const article = document.getElementById('article');
+  if (!article) return;
+
+  const headingEls = article.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  if (headingEls.length === 0) return;
+
+  const fragment = document.createDocumentFragment();
+
+  for (const h of headingEls) {
+    if (!h.id) continue;
+    const depth = parseInt(h.tagName[1]);
+    const indent = depth - 1;
+    const text = h.textContent || '';
+
+    const link = document.createElement('a');
+    link.href = '#' + h.id;
+    link.className = 'toc-link group relative flex items-start text-foreground/70 no-underline transition-all duration-200 hover:text-accent';
+    link.setAttribute('data-indent', String(indent));
+    link.setAttribute('data-target', h.id);
+
+    for (let i = 0; i < indent; i++) {
+      const col = document.createElement('span');
+      col.className = 'toc-line-col flex w-5 shrink-0 flex-col items-center self-stretch';
+      const line = document.createElement('span');
+      line.className = 'toc-line h-full w-px bg-border/30 transition-colors duration-200';
+      col.appendChild(line);
+      link.appendChild(col);
+    }
+
+    const dotCol = document.createElement('span');
+    dotCol.className = 'toc-dot mt-[5px] flex w-4 shrink-0 items-center justify-center';
+    const dot = document.createElement('span');
+    dot.className = 'toc-dot-inner block';
+    dotCol.appendChild(dot);
+    link.appendChild(dotCol);
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'toc-text flex-1 py-1.5 text-sm leading-[1.4]';
+    textSpan.textContent = text;
+    link.appendChild(textSpan);
+
+    fragment.appendChild(link);
   }
+
+  // Comment link
+  const commentLink = document.createElement('a');
+  commentLink.href = '#twikoo';
+  commentLink.className = 'toc-link group relative flex items-start text-foreground/70 no-underline transition-all duration-200 hover:text-accent';
+  commentLink.setAttribute('data-indent', '1');
+  commentLink.setAttribute('data-comment', '');
+
+  const c1 = document.createElement('span');
+  c1.className = 'toc-line-col flex w-5 shrink-0 flex-col items-center self-stretch';
+  const l1 = document.createElement('span');
+  l1.className = 'toc-line h-full w-px bg-border/30 transition-colors duration-200';
+  c1.appendChild(l1);
+  commentLink.appendChild(c1);
+
+  const dc = document.createElement('span');
+  dc.className = 'toc-dot mt-[5px] flex w-4 shrink-0 items-center justify-center';
+  const d = document.createElement('span');
+  d.className = 'toc-dot-inner block';
+  dc.appendChild(d);
+  commentLink.appendChild(dc);
+
+  const ts = document.createElement('span');
+  ts.className = 'toc-text flex-1 py-1.5 text-sm leading-[1.4]';
+  ts.textContent = '评论';
+  commentLink.appendChild(ts);
+
+  fragment.appendChild(commentLink);
+  list.appendChild(fragment);
+
+  const tocLinks = list.querySelectorAll('.toc-link');
+  let activeId: string | null = null;
+
+  const setActive = (id: string | null) => {
+    if (id === activeId) return;
+    activeId = id;
+    tocLinks.forEach((link) => {
+      const linkEl = link as HTMLElement;
+      const target = linkEl.getAttribute('data-target');
+      if (target && target === id) {
+        linkEl.setAttribute('data-active', '');
+      } else {
+        linkEl.removeAttribute('data-active');
+      }
+    });
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    let topmost: string | null = null;
+    let topmostY = Infinity;
+
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        const y = entry.boundingClientRect.top;
+        if (y < topmostY) {
+          topmostY = y;
+          topmost = entry.target.id;
+        }
+      }
+    }
+
+    if (topmost) setActive(topmost);
+  }, { rootMargin: '-80px 0px -70% 0px' });
+
+  headingEls.forEach((h) => observer.observe(h));
+
+  tocLinks.forEach((link) => {
+    link.addEventListener('click', close);
+  });
+})();
 </script>
 
 <style>
-  .toc-link {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
   .toc-dot-inner {
     width: 5px;
     height: 5px;

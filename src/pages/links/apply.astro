@@ -108,8 +108,8 @@ descr: 茶香四溢，编程世界</pre>
     var fillBtn = document.getElementById('fill-btn');
     if (fillBtn) {
       fillBtn.addEventListener('click', function() {
-        var commentBox = document.querySelector('#tcomment textarea, .twikoo .el-textarea textarea') ||
-                         document.querySelector('#tcomment .el-input textarea') ||
+        var commentBox = document.querySelector('.twikoo .el-textarea textarea') ||
+                         document.querySelector('.twikoo .el-input textarea') ||
                          document.querySelector('.twikoo textarea');
         if (commentBox) {
           var template = `名称：\n地址：\n头像：\n描述：`;

@@ -1,15 +1,15 @@
-<div id="tcomment" class="mt-8"></div>
+<div id="twikoo" class="mt-8"></div>
 <script is:inline>
   (function() {
     var checkExist = setInterval(function() {
-      if (document.getElementById('tcomment')) {
+      if (document.getElementById('twikoo')) {
         clearInterval(checkExist);
         var script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/twikoo/1.7.12/twikoo.all.min.js';
         script.onload = function() {
           twikoo.init({
             envId: 'https://twikoo.mingcy.cn/',
-            el: '#tcomment',
+            el: '#twikoo',
           });
         };
         script.onerror = function() {
@@ -18,7 +18,7 @@
           fallback.onload = function() {
             twikoo.init({
               envId: 'https://twikoo.mingcy.cn/',
-              el: '#tcomment',
+              el: '#twikoo',
             });
           };
           document.head.appendChild(fallback);

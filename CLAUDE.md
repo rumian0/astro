@@ -68,18 +68,18 @@ pnpm run deploy        # 构建 + 提交 + 推送 GitHub
 - `/links/fcircle/` 页面：iframe 无边框全屏嵌入，移除所有包裹元素和状态区块
 - `/links/apply/` 页面：添加「一键填充」按钮，可自动填入申请格式到评论框
 
-## 文章侧边目录（TableOfContents）
+## 文章悬浮目录（Floating TableOfContents）
 
 - 组件：`src/components/TableOfContents.astro`
-- 在 `PostDetails.astro` 中通过 `render()` 的 `headings` 字段获取文章 h1~h5 标题
-- 布局：`lg:flex lg:gap-x-8` 并在右侧 `lg:w-56` 固定侧边栏（`sticky top-24`）
-- 树形视觉：每位条目渲染 `indent` 列竖线（h1=0 列，h2=1 列，h3=2 列...），竖线使用 `bg-border/30`，通过 `self-stretch` + `flex-1` 贯穿条目整高
-- 圆点：h1 为实心 `bg-foreground`，h2~h5 为空心 `border-foreground/70`
-- 激活态：`IntersectionObserver` 监听 `#article h1~h5`，当前可见标题对应条目高亮（`bg-accent/8 text-accent font-medium`，竖线变为 `accent/50`）
-- 底部固定「评论」条目，点击平滑滚动到 `#tcomment`
-- 所有色彩使用 Tailwind 主题变量（`text-foreground`、`border-border`、`bg-accent/8` 等），适配亮色/暗黑模式
-- 已从 `astro.config.ts` 中移除 `remark-toc` 和 `remark-collapse`（不再有嵌入式目录，与侧边目录冲突）
-- typography.css 中对应的嵌入式 TOC 样式（`details` / `summary` / 嵌套列表）为死代码，可清理
+- **自包含**：无 props 依赖，JS 在客户端自动提取 `#article` 内的 h1~h6
+- **触发**：右侧固定圆形悬浮按钮（`position: fixed; bottom-24` 位于 BackToTopButton 上方），点击展开
+- **面板**：从右侧滑入的遮罩面板（`w-72 md:w-80`），含半透明背景遮罩
+- **树形视觉**：每位条目渲染 `indent` 列竖线 + 圆点（h1 实心，h2~h6 空心），点击链接后自动关闭面板
+- **激活态**：`IntersectionObserver` 监听 `#article h1~h6`，滚动高亮当前可见标题
+- **底部**「评论」条目，点击滚动到 `#twikoo`
+- 所有色彩使用 CSS 变量（`var(--foreground)`、`var(--accent)` 等），适配亮色/暗黑模式
+- 已从 `astro.config.ts` 中移除 `remark-toc` 和 `remark-collapse`
+- typography.css 中对应的嵌入式 TOC 样式已清理（`details` / `summary` / 嵌套列表）
 
 ## 文章内容标签系统
 
@@ -113,6 +113,16 @@ pnpm run deploy        # 构建 + 提交 + 推送 GitHub
 - 使用：`import LinkCard from "@/components/LinkCard.astro"`
 - 属性：`title`（必填）、`url`（必填）、`desc`（可选）、`image`（可选）
 - 样式：友链风格方框卡片，hover 上浮 + 阴影，双列自适应
+
+## 评论系统（Twikoo）
+
+- 组件：`src/components/Twikoo.astro`
+- 挂载点：`<div id="twikoo">`（原 `#tcomment`，2024-06 统一改为 `#twikoo` 以匹配默认类名）
+- 初始化：CDN 加载 `twikoo.all.min.js`，envId: `https://twikoo.mingcy.cn/`
+- 样式覆盖：`src/styles/global.css` 末尾 `.twikoo` 命名空间块
+- 覆盖内容：输入框圆角/聚焦光晕、按钮圆角/hover 动画、评论卡片边框/阴影、头像圆角、回复树缩进线条
+- 暗色适配：所有颜色使用 CSS 变量，暗色下补充背景微调
+- 友链申请页（`links/apply.astro`）的一键填充脚本通过 `.twikoo textarea` 选择器定位评论框
 
 ### 配置位置
 
