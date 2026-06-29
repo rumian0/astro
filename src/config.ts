@@ -4,6 +4,7 @@ export const SITE = {
   profile: process.env.PUBLIC_SOCIAL_GITHUB ?? "",
   desc: "茶香四溢,编程世界.",
   title: "茗辰原",
+  blogPathPrefix: "",
   ogImage: "mingcy-og.webp",
   lightAndDarkMode: true,
   postPerIndex: 6,

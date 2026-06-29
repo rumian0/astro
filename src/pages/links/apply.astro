@@ -5,52 +5,88 @@ import Footer from "@/components/Footer.astro";
 import Twikoo from "@/components/Twikoo.astro";
 ---
 
-<Layout title="申请友链 - 茗辰原" description="申请与茗辰原交换友链">
+<Layout title="友链申请 - 茗辰原" description="申请与茗辰原交换友链">
   <Header />
   <main id="main-content" class="mx-auto max-w-3xl px-4 py-12">
-    <h1 class="mb-2 text-center text-3xl font-bold text-white">🤝 申请友链</h1>
-    <p class="mb-8 text-center text-gray-400">想和茗辰原交换友链？欢迎申请！</p>
+    <h1 class="mb-2 text-center text-3xl font-bold text-white">友链申请</h1>
+    <p class="mb-8 text-center text-gray-400">想和茗辰原交换友链？请先阅读下面的申请说明</p>
 
-    <div class="glass-card mb-6 rounded-2xl p-6">
-      <h2 class="mb-3 text-lg font-bold text-cyan-300">📋 申请流程</h2>
-      <ol class="list-inside list-decimal space-y-2 text-gray-300">
-        <li>确认贵站符合基本要求，先添加本站友链</li>
-        <li>按下方格式整理站点信息</li>
-        <li>在页面底部评论区提交申请，审核通过后添加</li>
-      </ol>
+    <div class="mb-4 flex gap-2 justify-center">
+      <a href="/links/" class="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300 transition-colors hover:bg-cyan-500/20">查看友链</a>
     </div>
 
+    <!-- 流程步骤 -->
+    <div class="grid gap-4 mb-6 md:grid-cols-3">
+      <div class="glass-card rounded-2xl p-6 text-center">
+        <div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/20 text-lg font-bold text-cyan-300">01</div>
+        <h3 class="mb-2 font-bold text-white">确认要求</h3>
+        <p class="text-sm text-gray-400">确认贵站符合基本要求，并先添加本站友链</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 text-center">
+        <div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/20 text-lg font-bold text-cyan-300">02</div>
+        <h3 class="mb-2 font-bold text-white">整理信息</h3>
+        <p class="text-sm text-gray-400">按照格式整理站点信息，尽量提供稳定可访问的头像链接</p>
+      </div>
+      <div class="glass-card rounded-2xl p-6 text-center">
+        <div class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/20 text-lg font-bold text-cyan-300">03</div>
+        <h3 class="mb-2 font-bold text-white">提交申请</h3>
+        <p class="text-sm text-gray-400">在页面底部评论区提交申请，审核通过后会添加并回复</p>
+      </div>
+    </div>
+
+    <!-- 要求列表 -->
     <div class="glass-card mb-6 rounded-2xl p-6">
-      <h2 class="mb-3 text-lg font-bold text-cyan-300">📌 友链要求</h2>
-      <ul class="list-inside list-disc space-y-1 text-sm text-gray-300">
-        <li>优先接受个人博客、技术笔记、生活记录</li>
-        <li>站点应能稳定访问，建议启用 HTTPS</li>
-        <li>内容原创或认真整理，避免整站搬运</li>
-        <li>不得包含违法违规、色情、赌博等内容</li>
-        <li>申请前请先添加本站友链</li>
+      <h2 class="mb-4 text-lg font-bold text-cyan-300">友链要求</h2>
+      <ul class="space-y-3">
+        <li class="flex gap-3 text-sm text-gray-300">
+          <span class="mt-0.5 flex-shrink-0">📌</span>
+          <span><strong>站点定位</strong> — 优先接受个人博客、技术笔记、生活记录等非强商业化站点</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-300">
+          <span class="mt-0.5 flex-shrink-0">📌</span>
+          <span><strong>内容质量</strong> — 希望有稳定且真实的内容输出，避免整站搬运和 AI 批量灌水</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-300">
+          <span class="mt-0.5 flex-shrink-0">📌</span>
+          <span><strong>合规底线</strong> — 站点不得包含违法违规、色情、赌博、侵权盗版等内容</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-300">
+          <span class="mt-0.5 flex-shrink-0">📌</span>
+          <span><strong>访问体验</strong> — 站点应能稳定访问，尽量保证国内访问体验</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-300">
+          <span class="mt-0.5 flex-shrink-0">📌</span>
+          <span><strong>互惠原则</strong> — 申请前请先添加本站友链，或在留言中说明预计添加时间</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-300">
+          <span class="mt-0.5 flex-shrink-0">📌</span>
+          <span><strong>内容数量</strong> — 建议已有 <strong>15 篇以上</strong>文章，质量较高可放宽</span>
+        </li>
       </ul>
     </div>
 
+    <!-- 本站信息 -->
     <div class="glass-card mb-6 rounded-2xl p-6">
-      <h2 class="mb-3 text-lg font-bold text-cyan-300">ℹ️ 本站信息</h2>
+      <h2 class="mb-3 text-lg font-bold text-cyan-300">本站信息</h2>
+      <p class="mb-2 text-sm text-gray-400">如果您愿意在贵站添加茗辰原，可以直接使用下面的信息：</p>
       <pre class="overflow-x-auto rounded-lg bg-black/30 p-4 text-sm text-gray-300">
 name: 茗辰原
-link: https://mingcy.cn/
+link: https://s.mingcy.cn
 avatar: https://mingcy.cn/image/mcy.png
-descr: 茶香四溢,编程世界
-atom: https://mingcy.cn/atom.xml</pre>
-      <p class="mt-2 text-xs text-gray-500">请先在贵站添加本站友链，然后在评论区按格式提交申请。</p>
+descr: 茶香四溢，编程世界</pre>
     </div>
 
+    <!-- 申请格式 -->
     <div class="glass-card mb-6 rounded-2xl p-6">
-      <h2 class="mb-3 text-lg font-bold text-cyan-300">📝 申请格式</h2>
-      <p class="mb-2 text-sm text-gray-400">在评论区按如下格式提交：</p>
+      <h2 class="mb-3 text-lg font-bold text-cyan-300">申请格式</h2>
+      <p class="mb-2 text-sm text-gray-400">请在评论区按如下格式提交信息：</p>
       <pre class="overflow-x-auto rounded-lg bg-black/30 p-4 text-sm text-gray-300">
-name: 站点名称
-link: 站点地址
-avatar: 头像地址
-descr: 一句话描述
-siteshot: 站点截图（可选）</pre>
+{`{
+  name: "名称",
+  url: "地址",
+  avatar: "头像",
+  desc: "描述"
+}`}</pre>
     </div>
 
     <Twikoo />

@@ -2,28 +2,43 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-const res = await fetch("https://a.mingcy.cn/js/friend.json");
-const data = await res.json();
-const friends = data.friends || [];
+import { friendLinks } from "@/data/links";
 ---
 
 <Layout title="友链 - 茗辰原" description="茗辰原的友链展示">
   <Header />
   <main id="main-content" class="mx-auto max-w-5xl px-4 py-12">
-    <h1 class="mb-2 text-center text-3xl font-bold text-white">🌸 友链</h1>
+    <h1 class="mb-2 text-center text-3xl font-bold text-white">友链</h1>
     <p class="mb-8 text-center text-gray-400">认识我的朋友们</p>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-      {friends.map(([name, url, avatar]: string[]) => (
-        <a href={url} target="_blank" rel="noopener"
-          class="glass-card group flex items-center gap-4 rounded-xl p-4 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/10">
-          <img src={avatar} alt={name} class="h-12 w-12 flex-shrink-0 rounded-full object-cover" loading="lazy"/>
-          <div class="min-w-0">
-            <p class="truncate font-medium text-white group-hover:text-cyan-300">{name}</p>
-            <p class="truncate text-xs text-gray-500">{new URL(url).hostname}</p>
-          </div>
-        </a>
-      ))}
-    </div>
+
+    {friendLinks.map((cat) => (
+      <section class="mb-10">
+        <div class="mb-4 flex items-center gap-3">
+          <h2 class="text-lg font-bold text-cyan-300">{cat.title}</h2>
+          <div class="h-px flex-1 bg-border/20" />
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {cat.links.map((link) => (
+            <a
+              href={link.url} target="_blank" rel="noopener"
+              class="glass-card group flex items-center gap-4 rounded-xl p-4 transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/10"
+            >
+              <img
+                src={link.avatar || "https://mingcy.cn/image/mcy.png"}
+                alt={link.name}
+                class="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+                loading="lazy"
+              />
+              <div class="min-w-0 flex-1">
+                <p class="truncate font-medium text-white group-hover:text-cyan-300">{link.name}</p>
+                {link.desc && <p class="truncate text-xs text-gray-500">{link.desc}</p>}
+                <p class="truncate text-xs text-gray-600">{new URL(link.url).hostname}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))}
   </main>
   <Footer />
 </Layout>

@@ -12,11 +12,11 @@ const isGalleryEntry = (
 export const getGallerySlug = (id: string) => id.replace(/\/index(?:\.(?:md|mdx))?$/, "");
 
 export const getEntryPath = (
-  entry: Pick<ContentEntry, "collection" | "id" | "filePath">
+  entry: Pick<ContentEntry, "collection" | "id" | "filePath" | "data">
 ) =>
   isGalleryEntry(entry)
     ? `/galleries/${getGallerySlug(entry.id)}`
-    : getPath(entry.id, entry.filePath);
+    : "/" + getPath(entry.id, entry.filePath, (entry.data as any).pubDatetime);
 
 export const getEntryPublishedMs = (entry: ContentEntry) => {
   const modDatetime = "modDatetime" in entry.data ? entry.data.modDatetime : null;
