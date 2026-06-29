@@ -5,7 +5,7 @@
       if (document.getElementById('tcomment')) {
         clearInterval(checkExist);
         var script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/twikoo@1.6.40/dist/twikoo.all.min.js';
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/twikoo/1.7.12/twikoo.all.min.js';
         script.onload = function() {
           twikoo.init({
             envId: 'https://twikoo.mingcy.cn/',
@@ -14,7 +14,7 @@
         };
         script.onerror = function() {
           var fallback = document.createElement('script');
-          fallback.src = 'https://unpkg.com/twikoo@1.6.40/dist/twikoo.all.min.js';
+          fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/twikoo/1.7.12/twikoo.all.min.js';
           fallback.onload = function() {
             twikoo.init({
               envId: 'https://twikoo.mingcy.cn/',

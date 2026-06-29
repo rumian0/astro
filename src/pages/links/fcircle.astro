@@ -2,24 +2,923 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import BackToTopButton from "@/components/BackToTopButton.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import { SITE } from "@/config";
+import { friendLinks } from "@/data/links";
+
+const title = `友圈 | ${SITE.title}`;
+
+const allFriends = friendLinks.flatMap(c => c.links);
 ---
 
-<Layout title="友圈 - 茗辰原" description="朋友们的最新动态">
+<Layout title={title} description="聚合友链文章与站点状态">
   <Header />
-  <main id="main-content" class="relative" style="height: calc(100vh - 64px);">
-    <div class="absolute inset-0">
-      <iframe src="https://fc.mingcy.cn/"
-        class="h-full w-full border-0"
-        loading="lazy"
-        sandbox="allow-scripts allow-same-origin allow-forms"
-        title="朋友圈">
-      </iframe>
+  <Breadcrumb />
+  <main id="main-content" class="app-layout pb-12">
+    <!-- ═══════════ Hero ═══════════ -->
+    <div class="circle-hero" data-circle-hero>
+      <div class="aurora-orb a1"></div>
+      <div class="aurora-orb a2"></div>
+      <div class="aurora-orb a3"></div>
+      <div class="aurora-mouse" data-circle-mouse></div>
+
+      <div class="hero-inner">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span>{allFriends.length} 位好友</span>
+        </div>
+
+        <h1 class="hero-title">朋友圈</h1>
+        <p class="hero-desc">聚合友链文章，了解朋友们在做什么</p>
+
+        <!-- Friend avatars mosaic -->
+        <div class="friend-strip">
+          <div class="friend-strip-track">
+            {allFriends.map(f => (
+              <a
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="friend-chip"
+                title={f.desc ? `${f.name} — ${f.desc}` : f.name}
+              >
+                {f.avatar ? (
+                  <img src={f.avatar} alt={f.name} loading="lazy" />
+                ) : (
+                  <span class="chip-fallback">{f.name.charAt(0)}</span>
+                )}
+                <span class="chip-name">{f.name}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="absolute left-4 top-4 z-10">
-      <span class="rounded-full bg-black/40 px-3 py-1 text-xs text-white/70 backdrop-blur-sm">
-        朋友圈
-      </span>
-    </div>
+
+    <!-- ═══════════ Friend Circle Lite root ═══════════ -->
+    <section class="feed-section">
+      <div id="friend-circle-lite-root"></div>
+    </section>
+
+    <!-- ═══════════ Link Health Status ═══════════ -->
+    <section class="status-section">
+      <div class="status-head">
+        <h2 class="status-title">
+          <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          友链状态
+        </h2>
+        <span id="links-summary" class="status-summary">加载中…</span>
+      </div>
+      <div id="links-grid" class="status-grid"></div>
+    </section>
   </main>
+
+  <BackToTopButton />
   <Footer />
 </Layout>
+
+<!-- ═══════════ Plugin CSS ═══════════ -->
+<link
+  rel="stylesheet"
+  href="https://fastly.jsdelivr.net/gh/willow-god/Friend-Circle-Lite/main/fclite.min.css"
+/>
+
+<script is:inline>
+  // Pass site theme to plugin
+  window.__fcliteTheme =
+    document.documentElement.getAttribute("data-theme") || "light";
+
+  if (typeof UserConfig === "undefined") {
+    var UserConfig = {
+      private_api_url: "https://fc.mingcy.cn/",
+      page_turning_number: 24,
+      error_img:
+        "https://i.p-i.vip/30/20240815-66bced9226a36.webp",
+    };
+  }
+</script>
+
+<script is:inline src="https://fastly.jsdelivr.net/gh/willow-god/Friend-Circle-Lite/main/fclite.min.js">
+</script>
+
+<script is:inline>
+  // ── Strip footer credits, keep only update date ──
+  (function () {
+    function cleanFooter() {
+      var c = document.getElementById("stats-container");
+      if (!c || !c.children.length) { setTimeout(cleanFooter, 600); return; }
+      // Keep only the last child (更新时间), remove others
+      while (c.children.length > 1) c.removeChild(c.children[0]);
+    }
+    setTimeout(cleanFooter, 2000);
+  })();
+
+  // ── Link status ──
+  (function () {
+    fetch("https://fc.mingcy.cn/status.json")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var links = data.link_status || [];
+        var okCount = 0;
+        links.forEach(function (item) { if (item.success) okCount++; });
+        var failCount = links.length - okCount;
+
+        var summaryEl = document.getElementById("links-summary");
+        if (summaryEl) {
+          summaryEl.innerHTML =
+            '<span class="stat-ok">' + okCount + ' 正常</span>' +
+            '<span class="stat-sep">·</span>' +
+            '<span class="stat-fail">' + failCount + ' 异常</span>';
+        }
+
+        var grid = document.getElementById("links-grid");
+        if (!grid) return;
+        if (links.length === 0) {
+          grid.innerHTML =
+            '<div class="status-empty">暂无数据</div>';
+          return;
+        }
+        grid.innerHTML = links
+          .map(function (item) {
+            var cls = item.success ? "ok" : "fail";
+            var label = item.success ? "正常" : "异常";
+            return (
+              '<a class="status-card ' +
+              cls +
+              '" href="' +
+              item.link +
+              '" target="_blank" rel="noopener" title="' +
+              item.name +
+              '">' +
+              '<span class="sc-indicator"></span>' +
+              '<span class="sc-name">' +
+              esc(item.name) +
+              "</span>" +
+              '<span class="sc-label">' +
+              label +
+              "</span>" +
+              "</a>"
+            );
+          })
+          .join("");
+      })
+      .catch(function () {
+        var el = document.getElementById("links-summary");
+        if (el) el.textContent = "暂无数据";
+      });
+
+    function esc(t) {
+      if (!t) return "";
+      var d = document.createElement("div");
+      d.textContent = t;
+      return d.innerHTML;
+    }
+  })();
+</script>
+
+<style>
+  /* ═══════════════════════════════════════
+     HERO (scoped — elements in template)
+  ═══════════════════════════════════════ */
+  .circle-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    padding: 3rem 2rem 2rem;
+    margin-bottom: 2.5rem;
+    background: color-mix(
+      in srgb,
+      var(--color-foreground) 3%,
+      var(--color-background)
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+
+  .aurora-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    will-change: transform;
+  }
+  .aurora-orb.a1 {
+    width: 320px; height: 320px;
+    top: -35%; left: -12%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-accent) 22%, transparent),
+      transparent 70%
+    );
+    animation: o1 7s ease-in-out infinite alternate;
+  }
+  .aurora-orb.a2 {
+    width: 260px; height: 260px;
+    top: 5%; right: -8%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-border) 20%, transparent),
+      transparent 70%
+    );
+    animation: o2 9s ease-in-out infinite alternate;
+  }
+  .aurora-orb.a3 {
+    width: 200px; height: 200px;
+    bottom: -20%; left: 40%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-accent) 12%, transparent),
+      transparent 70%
+    );
+    animation: o3 11s ease-in-out infinite alternate;
+  }
+
+  @keyframes o1 {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(45px, 25px) scale(1.2); }
+  }
+  @keyframes o2 {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-35px, 30px) scale(1.15); }
+  }
+  @keyframes o3 {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(20px, -25px) scale(1.1); }
+  }
+
+  .aurora-mouse {
+    position: absolute;
+    width: 350px; height: 350px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-accent) 18%, transparent),
+      color-mix(in srgb, var(--color-border) 8%, transparent) 35%,
+      transparent 70%
+    );
+    filter: blur(50px);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    transform: translate(
+      calc(var(--mx, 0px) - 175px),
+      calc(var(--my, 0px) - 175px)
+    );
+    will-change: transform;
+    z-index: 1;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+    border: 1px solid
+      color-mix(in srgb, var(--color-accent) 18%, transparent);
+    color: var(--color-accent);
+    margin-bottom: 0.75rem;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(
+      135deg,
+      var(--color-foreground) 30%,
+      var(--color-accent)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(
+      0 0 30px color-mix(in srgb, var(--color-accent) 25%, transparent)
+    );
+    margin: 0;
+  }
+
+  @media (min-width: 640px) {
+    .hero-title { font-size: 3rem; }
+  }
+
+  .hero-desc {
+    margin: 0.5rem 0 0;
+    font-size: 0.95rem;
+    color: var(--color-foreground);
+    opacity: 0.55;
+  }
+
+  /* ── Friend avatars strip ── */
+  .friend-strip {
+    width: 100%;
+    margin-top: 2rem;
+    overflow: hidden;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 5%,
+      black 95%,
+      transparent
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 5%,
+      black 95%,
+      transparent
+    );
+  }
+
+  .friend-strip-track {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .friend-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem 0.3rem 0.3rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--color-foreground);
+    background: color-mix(
+      in srgb,
+      var(--color-foreground) 3%,
+      var(--color-background)
+    );
+    border: 1px solid
+      color-mix(in srgb, var(--color-border) 15%, transparent);
+    transition: all 0.25s ease;
+  }
+
+  .friend-chip img,
+  .chip-fallback {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .chip-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+    color: var(--color-accent);
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .friend-chip:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+    background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px
+      color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+
+  .chip-name {
+    white-space: nowrap;
+    max-width: 7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ═══════════════════════════════════════
+     FEED SECTION
+  ═══════════════════════════════════════ */
+  .feed-section {
+    margin-bottom: 2.5rem;
+  }
+
+  /* ═══════════════════════════════════════
+     STATUS SECTION
+  ═══════════════════════════════════════ */
+  .status-section {
+    padding: 1.75rem;
+    border-radius: 1.25rem;
+    border: 1px solid
+      color-mix(in srgb, var(--color-border) 14%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-foreground) 1.5%,
+      var(--color-background)
+    );
+  }
+
+  .status-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .status-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-foreground);
+  }
+
+  .status-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--color-accent);
+    opacity: 0.7;
+  }
+
+  .status-summary {
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    opacity: 0.6;
+  }
+
+  .stat-ok { color: #22c55e; }
+  .stat-fail { color: #ef4444; }
+  .stat-sep { opacity: 0.3; }
+
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .status-card {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.75rem;
+    text-decoration: none;
+    font-size: 0.82rem;
+    border: 1px solid
+      color-mix(in srgb, var(--color-border) 12%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-foreground) 2%,
+      var(--color-background)
+    );
+    transition: all 0.25s ease;
+  }
+
+  .status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px
+      color-mix(in srgb, var(--color-foreground) 4%, transparent);
+  }
+
+  .status-card.ok:hover {
+    border-color: color-mix(in srgb, #22c55e 30%, transparent);
+    background: color-mix(in srgb, #22c55e 4%, transparent);
+    box-shadow: 0 4px 16px color-mix(in srgb, #22c55e 8%, transparent);
+  }
+
+  .status-card.fail:hover {
+    border-color: color-mix(in srgb, #ef4444 30%, transparent);
+    background: color-mix(in srgb, #ef4444 4%, transparent);
+    box-shadow: 0 4px 16px color-mix(in srgb, #ef4444 8%, transparent);
+  }
+
+  .sc-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-card.ok .sc-indicator {
+    background: #22c55e;
+    box-shadow: 0 0 6px color-mix(in srgb, #22c55e 50%, transparent);
+  }
+
+  .status-card.fail .sc-indicator {
+    background: #ef4444;
+    box-shadow: 0 0 6px color-mix(in srgb, #ef4444 50%, transparent);
+  }
+
+  .sc-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-foreground);
+  }
+
+  .sc-label {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+  }
+
+  .status-card.ok .sc-label {
+    color: #22c55e;
+    background: color-mix(in srgb, #22c55e 12%, transparent);
+  }
+
+  .status-card.fail .sc-label {
+    color: #ef4444;
+    background: color-mix(in srgb, #ef4444 12%, transparent);
+  }
+
+  .status-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-foreground);
+    opacity: 0.35;
+    font-size: 0.9rem;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .circle-hero { padding: 2rem 1rem 1.5rem; }
+    .hero-title { font-size: 2rem; }
+    .friend-strip-track { gap: 0.35rem; }
+    .friend-chip { font-size: 0.7rem; padding: 0.2rem 0.5rem 0.2rem 0.2rem; }
+    .status-grid { grid-template-columns: 1fr 1fr; }
+    .status-head { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  }
+</style>
+
+<!-- ═══════════ Global styles for Friend-Circle-Lite plugin DOM ═══════════ -->
+<style is:global>
+  /* ── Variables ── */
+  #friend-circle-lite-root {
+    --hover-color: var(--color-accent);
+    --author-color-light: var(--color-foreground);
+    --author-color-dark: var(--color-foreground);
+    --shadow-color-light: var(--color-foreground);
+    --shadow-color-dark: var(--color-foreground);
+    --border-color-light: var(--color-border);
+    --border-color-dark: var(--color-border);
+    --text-color: var(--color-foreground);
+    --background-color: transparent;
+    --container-bg-color: transparent;
+    --tag-bg-color: transparent;
+  }
+
+  /* ── Random article card ── */
+  #friend-circle-lite-root #random-article {
+    background: color-mix(in srgb, var(--color-accent) 4%, var(--color-background));
+    border: 1px solid color-mix(in srgb, var(--color-accent) 14%, transparent);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--color-foreground) 2%, transparent);
+  }
+
+  #friend-circle-lite-root #random-article:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 28%, transparent);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  #friend-circle-lite-root .random-stats { gap: 0.6rem; }
+
+  #friend-circle-lite-root .stat-item {
+    background: color-mix(in srgb, var(--color-background) 60%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 10%, transparent);
+    border-radius: 0.75rem;
+    padding: 0.7rem 0.5rem;
+    backdrop-filter: blur(4px);
+  }
+
+  #friend-circle-lite-root .stat-item:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+    transform: translateY(-1px);
+  }
+
+  #friend-circle-lite-root .stat-num {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--color-accent);
+  }
+
+  #friend-circle-lite-root .stat-text {
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    color: var(--color-foreground);
+    opacity: 0.45;
+  }
+
+  #friend-circle-lite-root .random-container-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--color-foreground);
+    opacity: 0.35;
+  }
+
+  #friend-circle-lite-root .random-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-foreground);
+    line-height: 1.4;
+  }
+
+  #friend-circle-lite-root .random-title:hover { color: var(--color-accent); }
+
+  #friend-circle-lite-root .random-author,
+  #friend-circle-lite-root .random-date {
+    background: color-mix(in srgb, var(--color-background) 50%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-border) 10%, transparent);
+    color: var(--color-foreground);
+    opacity: 0.6;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    padding: 0.25rem 0.7rem;
+    backdrop-filter: blur(4px);
+  }
+
+  #friend-circle-lite-root .random-author:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
+    opacity: 1;
+  }
+
+  #friend-circle-lite-root .random-button-container a {
+    color: var(--color-foreground);
+    background: color-mix(in srgb, var(--color-background) 50%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-border) 18%, transparent);
+    border-radius: 0.5rem;
+    font-size: 0.78rem;
+    padding: 0.45rem 1rem;
+    backdrop-filter: blur(4px);
+    transition: all 0.25s ease;
+  }
+
+  #friend-circle-lite-root .random-button-container a:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  }
+
+  #friend-circle-lite-root .random-link-button {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    color: var(--color-accent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 18%, transparent);
+    border-radius: 0.5rem;
+    font-size: 0.78rem;
+    padding: 0.45rem 1.2rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  #friend-circle-lite-root .random-link-button:hover {
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+
+  /* ── Article cards ── */
+  #friend-circle-lite-root .articles-container { gap: 0.85rem; }
+
+  #friend-circle-lite-root .card {
+    position: relative;
+    background: color-mix(in srgb, var(--color-foreground) 2.5%, var(--color-background));
+    border: 1px solid color-mix(in srgb, var(--color-border) 12%, transparent);
+    border-radius: 1rem;
+    padding: 1.15rem 1.1rem;
+    height: auto;
+    min-height: 120px;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-foreground) 2%, transparent);
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  #friend-circle-lite-root .card:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
+    transform: translateY(-4px);
+    box-shadow:
+      0 8px 30px color-mix(in srgb, var(--color-accent) 7%, transparent),
+      0 1px 3px color-mix(in srgb, var(--color-foreground) 2%, transparent);
+  }
+
+  #friend-circle-lite-root .card-title {
+    color: var(--color-foreground);
+    font-size: 0.92rem;
+    font-weight: 650;
+    line-height: 1.55;
+    margin-bottom: 0.6rem;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  #friend-circle-lite-root .card-title:hover { color: var(--color-accent); }
+
+  #friend-circle-lite-root .card-author {
+    background: color-mix(in srgb, var(--color-foreground) 3%, var(--color-background));
+    border: 1px solid color-mix(in srgb, var(--color-border) 8%, transparent);
+    color: var(--color-foreground);
+    opacity: 0.65;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    padding: 0.18rem 0.55rem 0.18rem 0.18rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: fit-content;
+    backdrop-filter: blur(4px);
+  }
+
+  #friend-circle-lite-root .card-author:hover {
+    opacity: 1;
+    border-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  }
+
+  #friend-circle-lite-root .card-author img {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  #friend-circle-lite-root .card-date {
+    color: var(--color-foreground);
+    opacity: 0.35;
+    font-size: 0.68rem;
+    position: absolute;
+    bottom: 0.7rem;
+    right: 0.9rem;
+  }
+
+  #friend-circle-lite-root .card-bg {
+    opacity: 0.15;
+    width: 100px; height: 100px;
+    bottom: -12px;
+    right: -12px;
+    transition: opacity 0.4s ease;
+    z-index: 0;
+  }
+
+  #friend-circle-lite-root .card:hover .card-bg {
+    opacity: 0.3;
+  }
+
+  #friend-circle-lite-root .card-title,
+  #friend-circle-lite-root .card-author {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Load more button ── */
+  #friend-circle-lite-root #load-more-btn {
+    color: var(--color-foreground);
+    background: color-mix(in srgb, var(--color-foreground) 3%, var(--color-background));
+    border: 1px solid color-mix(in srgb, var(--color-border) 18%, transparent);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.55rem 2rem;
+    width: auto;
+    min-width: 140px;
+    margin: 1.5rem auto 1rem;
+    display: block;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  #friend-circle-lite-root #load-more-btn:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
+    min-width: 160px;
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  }
+
+  /* ── Stats footer ── */
+  #friend-circle-lite-root #stats-container {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--color-foreground);
+    opacity: 0.3;
+  }
+
+  /* ── Modal ── */
+  #friend-circle-lite-root .modal {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  #friend-circle-lite-root .modal-content {
+    background: color-mix(in srgb, var(--color-background) 92%, transparent);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid color-mix(in srgb, var(--color-border) 18%, transparent);
+    border-radius: 1.25rem;
+    box-shadow: 0 20px 60px color-mix(in srgb, var(--color-foreground) 8%, transparent);
+  }
+
+  #friend-circle-lite-root .modal-content hr {
+    border-color: color-mix(in srgb, var(--color-border) 12%, transparent);
+  }
+
+  #friend-circle-lite-root .modal-article {
+    border-bottom-color: color-mix(in srgb, var(--color-border) 8%, transparent);
+  }
+
+  #friend-circle-lite-root .modal-article .modal-article-title {
+    color: var(--color-foreground);
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+
+  #friend-circle-lite-root .modal-article .modal-article-title:hover {
+    color: var(--color-accent);
+  }
+
+  #friend-circle-lite-root .modal-article .modal-article-date {
+    color: var(--color-foreground);
+    opacity: 0.4;
+    font-size: 0.72rem;
+  }
+
+  #friend-circle-lite-root #modal-author-name-link {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  /* ── Loading & error states ── */
+  #friend-circle-lite-root .loading-spinner {
+    border-color: color-mix(in srgb, var(--color-border) 15%, transparent);
+    border-top-color: var(--color-accent);
+    border-width: 3px;
+    width: 36px; height: 36px;
+  }
+
+  #friend-circle-lite-root .loading-text,
+  #friend-circle-lite-root .error-text {
+    color: var(--color-foreground);
+    opacity: 0.45;
+    font-size: 0.85rem;
+  }
+
+  #friend-circle-lite-root .retry-button {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    color: var(--color-accent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 18%, transparent);
+    border-radius: 0.5rem;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  #friend-circle-lite-root .retry-button:hover {
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  }
+
+  /* ── Card animation ── */
+  @keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #friend-circle-lite-root .card {
+    animation: cardFadeIn 0.4s ease forwards;
+  }
+</style>

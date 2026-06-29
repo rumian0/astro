@@ -1,0 +1,25 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+---
+
+<Layout title="友圈 - 茗辰原" description="朋友们的最新动态">
+  <Header />
+  <main id="main-content" class="relative" style="height: calc(100vh - 64px);">
+    <div class="absolute inset-0">
+      <iframe src="https://fc.mingcy.cn/"
+        class="h-full w-full border-0"
+        loading="lazy"
+        sandbox="allow-scripts allow-same-origin allow-forms"
+        title="朋友圈">
+      </iframe>
+    </div>
+    <div class="absolute left-4 top-4 z-10">
+      <span class="rounded-full bg-black/40 px-3 py-1 text-xs text-white/70 backdrop-blur-sm">
+        朋友圈
+      </span>
+    </div>
+  </main>
+  <Footer />
+</Layout>

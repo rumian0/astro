@@ -23,7 +23,6 @@ const { noMarginTop = false, class: className, ...attrs } = Astro.props;
 <footer
   class:list={["footer-wrapper", { "mt-auto": !noMarginTop }, className]}
   role="contentinfo"
-  transition:persist
   {...attrs}
 >
   <!-- Top gradient border -->
@@ -53,14 +52,6 @@ const { noMarginTop = false, class: className, ...attrs } = Astro.props;
           茶香四溢，编程世界
         </p>
       </div>
-
-      <!-- Running time -->
-      <p
-        id="running-time"
-        class="text-center font-firacode text-xs tracking-wider text-foreground/55"
-      >
-        🚀已飞行了：计算中...
-      </p>
 
       <!-- Social links -->
       <nav class="flex flex-col items-center gap-3 sm:items-end" aria-labelledby={socialHeadingId}>
@@ -157,40 +148,3 @@ const { noMarginTop = false, class: className, ...attrs } = Astro.props;
     }
   }
 </style>
-
-<script is:inline data-astro-rerun>
-  const start = new Date("2024-01-20T00:00:00+08:00");
-
-  function updateRunningTime() {
-    const el = document.getElementById("running-time");
-    if (!el) return;
-    const diff = Math.floor((Date.now() - start.getTime()) / 1000);
-    const days = Math.floor(diff / 86400);
-    const hours = Math.floor((diff % 86400) / 3600);
-    const minutes = Math.floor((diff % 3600) / 60);
-    const seconds = diff % 60;
-    el.textContent =
-      "\u{1F680}\u5DF2\u98DE\u884C\u4E86\uFF1A" +
-      days +
-      "\u5929" +
-      String(hours).padStart(2, "0") +
-      "\u65F6" +
-      String(minutes).padStart(2, "0") +
-      "\u5206" +
-      String(seconds).padStart(2, "0") +
-      "\u79D2";
-  }
-
-  let rtInterval;
-  function startRuntime() {
-    clearInterval(rtInterval);
-    updateRunningTime();
-    rtInterval = setInterval(updateRunningTime, 10000);
-  }
-
-  document.addEventListener("astro:before-swap", function () {
-    clearInterval(rtInterval);
-  });
-  document.addEventListener("astro:page-load", startRuntime);
-  startRuntime();
-</script>
