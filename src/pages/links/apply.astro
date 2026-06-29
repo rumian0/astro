@@ -79,20 +79,47 @@ descr: 茶香四溢，编程世界</pre>
     <!-- 申请格式 -->
     <div class="glass-card mb-6 rounded-2xl p-6">
       <h2 class="mb-3 text-lg font-bold text-cyan-300">申请格式</h2>
-      <p class="mb-2 text-sm text-gray-400">请在评论区按如下格式提交信息：</p>
-      <pre class="overflow-x-auto rounded-lg bg-black/30 p-4 text-sm text-gray-300">
+      <p class="mb-2 text-sm text-gray-400">请在评论区按如下格式提交信息，点击「一键填充」自动填入评论框：</p>
+      <pre id="apply-template" class="overflow-x-auto rounded-lg bg-black/30 p-4 text-sm text-gray-300">
 {`{
   name: "名称",
   url: "地址",
   avatar: "头像",
   desc: "描述"
 }`}</pre>
+      <div class="mt-3">
+        <button id="fill-btn" class="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300 transition-colors hover:bg-cyan-500/20">
+          一键填充申请内容
+        </button>
+      </div>
     </div>
 
-    <Twikoo />
+    <div class="glass-card rounded-2xl p-6">
+      <h2 class="mb-3 text-lg font-bold text-cyan-300">提交申请</h2>
+      <p class="mb-4 text-sm text-gray-400">提交后我会尽快查看。若信息不完整或暂未满足要求，我会在评论区说明原因。</p>
+      <Twikoo />
+    </div>
   </main>
   <Footer />
 </Layout>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', function() {
+    var fillBtn = document.getElementById('fill-btn');
+    if (fillBtn) {
+      fillBtn.addEventListener('click', function() {
+        var commentBox = document.querySelector('#tcomment textarea, .twikoo .el-textarea textarea') ||
+                         document.querySelector('#tcomment .el-input textarea') ||
+                         document.querySelector('.twikoo textarea');
+        if (commentBox) {
+          var template = `名称：\n地址：\n头像：\n描述：`;
+          commentBox.value = template;
+          commentBox.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+    }
+  });
+</script>
 
 <style is:global>
   .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); }

@@ -57,6 +57,8 @@ const ogImage = ogImageUrl
   ? new URL(ogImageUrl, Astro.url.origin).href
   : undefined;
 
+const heroBg = ogImage;
+
 const layoutProps = {
   title: `${title} | ${SITE.title}`,
   author,
@@ -94,7 +96,10 @@ const nextPost =
   >
     <!-- Post header section -->
     <header class="post-header relative mb-10 text-center">
-      <div class="post-hero-bg"></div>
+      <div
+            class="post-hero-bg"
+            style={heroBg ? { backgroundImage: `url(${heroBg})` } : undefined}
+          ></div>
       <div class="relative z-10 rounded-3xl border border-border/20 bg-muted/5 px-6 py-8 backdrop-blur-md sm:px-10 sm:py-12">
         <!-- Title -->
         <h1
@@ -476,11 +481,11 @@ const nextPost =
     /* intentionally empty — styles fully handled by Tailwind utilities */
   }
 
-  /* Hero Aurora glow layer — gradient-only, no filter:blur (avoids repaint) */
+  /* Hero Aurora glow layer — uses ogImage when available */
   .post-hero-bg {
     position: absolute;
     inset: -2px;
-    opacity: 0.6;
+    opacity: 0.5;
     background:
       radial-gradient(
         circle at 20% 5%,
@@ -492,9 +497,24 @@ const nextPost =
         color-mix(in oklab, var(--accent) 8%, transparent) 0%,
         transparent 55%
       );
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     pointer-events: none;
     z-index: 0;
     border-radius: 1.5rem; /* matches rounded-3xl */
+  }
+
+  .post-hero-bg[style*="background-image"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.25) 0%,
+      rgb(0 0 0 / 0.55) 100%
+    );
+    border-radius: inherit;
   }
 
   .post-nav-link {

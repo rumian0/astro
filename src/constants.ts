@@ -3,6 +3,7 @@ import IconMail from "@/assets/icons/IconMail.svg";
 import IconGitHub from "@/assets/icons/IconGitHub.svg";
 import IconBrandX from "@/assets/icons/IconBrandX.svg";
 import IconLinkedin from "@/assets/icons/IconLinkedin.svg";
+import IconQQ from "@/assets/icons/IconQQ.svg";
 import IconWhatsapp from "@/assets/icons/IconWhatsapp.svg";
 import IconFacebook from "@/assets/icons/IconFacebook.svg";
 import IconTelegram from "@/assets/icons/IconTelegram.svg";
@@ -51,6 +52,12 @@ export const SOCIALS: Social[] = (
       href: PUBLIC_SOCIAL_EMAIL ? `mailto:${PUBLIC_SOCIAL_EMAIL}` : "",
       linkTitle: `Send an email to ${SITE.title}`,
       icon: IconMail,
+    },
+    {
+      name: "QQ",
+      href: "https://qm.qq.com/q/mg0A2VRmjC",
+      linkTitle: `${SITE.title} on QQ`,
+      icon: IconQQ,
     },
   ] satisfies Social[]
 ).filter(s => s.href !== "");

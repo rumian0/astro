@@ -27,7 +27,7 @@ export const SITE = {
     grain: true,
   },
   editPost: {
-    enabled: true,
+    enabled: false,
     text: "编辑此文章",
     url: process.env.PUBLIC_EDIT_POST_URL ?? "",
   },

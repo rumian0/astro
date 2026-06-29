@@ -61,5 +61,9 @@ pnpm run deploy        # 构建 + 提交 + 推送 GitHub
 - 自定义页面放在 `src/pages/`，必须与首页使用相同布局框架
 - 友链数据来源：`src/data/links.ts`（本地数据，非远程 JSON）
 - 不要修改原始 Hexo 源文件（位于 `../hexo/blog/shokax-can/source/_posts/`）
-- 站点域名：`https://mingcy.cn/`
+- 站点域名：`https://s.mingcy.cn/`
 - 旧 `/posts/...` 路径已不再使用，现在 URL 直接位于根路径
+- 文章详情页的 `post-hero-bg` 背景使用 frontmatter `ogImage` 作为封面背景图；无 `ogImage` 的文章保留原有的 Aurora 渐变效果
+- Footer 社交区增加 QQ 联系链接（图标为简化版企鹅轮廓 SVG）
+- `/links/fcircle/` 页面：iframe 无边框全屏嵌入，移除所有包裹元素和状态区块
+- `/links/apply/` 页面：添加「一键填充」按钮，可自动填入申请格式到评论框
