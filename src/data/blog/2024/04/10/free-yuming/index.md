@@ -5,6 +5,7 @@ description: "免费域名整理—半日闲"
 tags: ["实用推荐", "建站", "精选网站"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/9.webp"
 ---
 
 # **免费域名整理**

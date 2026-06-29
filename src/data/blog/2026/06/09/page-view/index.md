@@ -5,6 +5,7 @@ description: "没想到我的博客再一次被众人熟知,在此后我将继�
 tags: ["分享", "生活", "hexo"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/06/10/-.webp"
 ---
 
 # 茗叙

@@ -5,6 +5,7 @@ description: "这是一款可以添加学习课程表的软件"
 tags: ["电脑软件", "实用推荐", "班级"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/25/y8v6ox.jpeg"
 ---
 
 # 碎碎念

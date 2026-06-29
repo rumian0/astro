@@ -5,6 +5,7 @@ description: "今天日子很特别,想写一篇文章关于我的妈妈!"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2025/03/08/wallhaven-5g1wl8.webp"
 ---
 
 # 茗起

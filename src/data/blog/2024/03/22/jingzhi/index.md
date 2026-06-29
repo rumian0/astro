@@ -5,6 +5,7 @@ description: "学计算机，那就肯定得懂一样东西——**进制**（�
 tags: ["科幻科普", "编程语言", "计算机"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/6.webp"
 ---
 
 # 【计算机基础】关于进制

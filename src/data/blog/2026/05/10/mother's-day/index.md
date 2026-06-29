@@ -5,6 +5,7 @@ description: "祝天下所有母亲,母亲节快乐"
 tags: []
 featured: false
 draft: false
+ogImage: "https://i.imgs.ovh/2026/05/10/f1e439bb63c998175dabee9d892d8631.webp"
 ---
 
 # 茗叙

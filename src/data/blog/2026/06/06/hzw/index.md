@@ -5,6 +5,7 @@ description: "收到\"好站网\"的抱枕了!"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/28/-98f7287fb78073cb.webp"
 ---
 
 # 茗叙

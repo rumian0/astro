@@ -5,6 +5,7 @@ description: "关于我18岁成人礼经历"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/-1934592753048b35.webp"
 ---
 
 # 茗叙

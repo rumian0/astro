@@ -5,6 +5,7 @@ description: "Cloudflare上有趣的项目"
 tags: ["Cloudflare", "部署", "分享"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/25/v92r2m.jpeg"
 ---
 
 # 开端

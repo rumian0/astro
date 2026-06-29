@@ -5,6 +5,7 @@ description: "这篇主要是给我父亲写的,他经常睡不着"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2025/02/16/wallhaven-2yrw39.webp"
 ---
 
 # 茗起

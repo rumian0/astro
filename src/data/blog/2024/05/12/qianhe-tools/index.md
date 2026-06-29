@@ -5,6 +5,7 @@ description: "安利一款电脑程序，千盒工具"
 tags: ["实用推荐", "工具", "电脑软件"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/15.webp"
 ---
 
 # 前言

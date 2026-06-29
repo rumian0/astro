@@ -5,6 +5,7 @@ description: "TVBOX"
 tags: ["影视", "推荐", "电脑软件", "安卓应用"]
 featured: false
 draft: false
+ogImage: "http://view.lixingyong.com/images/2024/10/27/wallhaven-qzy187.webp"
 ---
 
 # TV版本

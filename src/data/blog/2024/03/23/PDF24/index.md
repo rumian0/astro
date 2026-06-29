@@ -5,6 +5,7 @@ description: "由牧羊人编写的转为PDF办公需要"
 tags: ["工具", "电脑软件"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/7.webp"
 ---
 
 AI概括

@@ -5,6 +5,7 @@ description: "我在逛bilibili发现的软线,感觉很不错,可以收藏帮�
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/--f22eb7efefcbd352.webp"
 ---
 
 # 碎碎念

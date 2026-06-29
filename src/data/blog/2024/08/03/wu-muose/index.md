@@ -5,6 +5,7 @@ description: "它是一款鼠标键盘操作录制软件"
 tags: ["工具", "电脑软件", "吾爱破解"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/25/v92r2m.jpeg"
 ---
 
 <aside>

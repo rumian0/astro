@@ -5,6 +5,7 @@ description: "有很多人问我牙齿怎么这么白?是不是用了科技?其�
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/-886c3fa009e90030.webp"
 ---
 
 # 碎碎念

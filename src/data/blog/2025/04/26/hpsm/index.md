@@ -5,6 +5,7 @@ description: "安卓端扫描神器实测！学生党 / 打工人 / 教师都能
 tags: ["实用", "安卓应用"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/--8b3c7a6d661ab45d.webp"
 ---
 
 # 茗起

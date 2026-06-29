@@ -5,6 +5,7 @@ description: "为Hexo-添加音乐与视频"
 tags: ["hexo", "技术分享", "实用"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/25/wallhaven-7p7yoe.png"
 ---
 
 # 简述

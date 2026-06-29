@@ -5,6 +5,7 @@ description: "制作随机图"
 tags: ["works", "Cloudflare", "壁纸", "随机图"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/10/27/wallhaven-d6rx8m.webp"
 ---
 
 随机图的轮子其实网上有不少了，但基本都需要一台服务器，或者用别人提供的服务。

@@ -5,6 +5,7 @@ description: "内个最强跳广告APP它回来了！"
 tags: ["app", "安卓应用"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/5.webp"
 ---
 
 # 李跳跳复活版！

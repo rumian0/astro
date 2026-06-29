@@ -10,7 +10,10 @@
     "astro": "astro",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "new:post": "node scripts/new-post.mjs",
+    "migrate:cover": "node scripts/migrate-cover.mjs",
+    "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.4",

@@ -5,6 +5,7 @@ description: "AI折磨强大了,有自主意识了?"
 tags: ["Ai", "Openai"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/10/27/wallhaven-x6mv2o.webp"
 ---
 
 # AI反人类?

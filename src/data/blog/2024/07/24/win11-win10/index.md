@@ -5,6 +5,7 @@ description: "win11的资源管理器改为win10，速度明显变快"
 tags: ["指令", "系统优化"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/25/o38lwp.png"
 ---
 
 <aside>

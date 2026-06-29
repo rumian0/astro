@@ -5,6 +5,7 @@ description: "我相信人,但不相信人性"
 tags: ["实验", "心理"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/09/30/wallhaven-zyeqev.webp"
 ---
 
 # 简介

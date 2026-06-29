@@ -5,6 +5,7 @@ description: "这是我在Github上发现的项目,虽然过去蛮久了,但有�
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/-6b07dc1b70c32c6f.webp"
 ---
 
 # 碎碎念

@@ -5,6 +5,7 @@ description: "震惊!AI塔罗牌"
 tags: ["塔罗牌", "安卓应用", "精选网页"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/10/27/wallhaven-gpeolq.webp"
 ---
 
 # 起源

@@ -1,10 +1,13 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
 import Twikoo from "@/components/Twikoo.astro";
 ---
 
 <Layout title="申请友链 - 茗辰原" description="申请与茗辰原交换友链">
-  <main class="mx-auto max-w-3xl px-4 py-12">
+  <Header />
+  <main id="main-content" class="mx-auto max-w-3xl px-4 py-12">
     <h1 class="mb-2 text-center text-3xl font-bold text-white">🤝 申请友链</h1>
     <p class="mb-8 text-center text-gray-400">想和茗辰原交换友链？欢迎申请！</p>
 
@@ -52,6 +55,7 @@ siteshot: 站点截图（可选）</pre>
 
     <Twikoo />
   </main>
+  <Footer />
 </Layout>
 
 <style is:global>

@@ -5,6 +5,7 @@ description: "一款睡眠统计的app"
 tags: ["app", "安卓应用", "实用推荐"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/2.webp"
 ---
 
 # 介绍

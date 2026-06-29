@@ -5,6 +5,7 @@ description: "为什么开了VPN但是,还能获取到真实ip"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/wallpaper.webp"
 ---
 
 # 茗叙

@@ -5,6 +5,7 @@ description: ""
 tags: ["分享", "生活"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/12/31/wallhaven-d6183o.webp"
 ---
 
 -------

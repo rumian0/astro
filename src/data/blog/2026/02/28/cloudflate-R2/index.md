@@ -5,6 +5,7 @@ description: "基于Cloudflare R2搭建免费云盘，支持带密码分享、�
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/ins-.webp"
 ---
 
 # 碎碎念

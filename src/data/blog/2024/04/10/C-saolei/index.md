@@ -5,6 +5,7 @@ description: ""
 tags: ["C++", "编程语言"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/8.webp"
 ---
 
 # **前言**

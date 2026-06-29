@@ -5,6 +5,7 @@ description: "好久都没更新博客了,我最近又是学校阅读日,考试,
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/-07904d3666a6fda3.webp"
 ---
 
 # 茗起

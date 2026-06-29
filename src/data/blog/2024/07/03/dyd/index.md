@@ -5,6 +5,7 @@ description: "一款程序专门批量下载抖音，快手，小红书等视频
 tags: ["实用推荐", "工具", "电脑软件"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/15.webp"
 ---
 
 <aside>

@@ -5,6 +5,7 @@ description: "ChatGPT-KEY的获取[无需手机号绑定]/保姆级搭建镜像�
 tags: ["ChatGPT", "Openai", "建站"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/1.webp"
 ---
 
 <aside>

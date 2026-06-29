@@ -5,6 +5,7 @@ description: "最近总是在抖音刷到这个,好多人说让我做一个,那�
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/--.webp"
 ---
 
 # 茗叙

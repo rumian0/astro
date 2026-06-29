@@ -5,6 +5,7 @@ description: "完美的男人!简直绝了,不断地冲破舒适圈!"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2025/03/22/wallhaven-p9r25m.webp"
 ---
 
 # 茗起

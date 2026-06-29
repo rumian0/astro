@@ -5,6 +5,7 @@ description: "白嫖25G永久网盘 InfiniCloud，搭建25G大空间Webdav图床
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/--f22eb7efefcbd352.webp"
 ---
 
 # 碎碎念

@@ -5,6 +5,7 @@ description: "这是我很想做的一期,因为喜欢收集网站,但是有时�
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/-b27d04627d55dcd2.webp"
 ---
 
 # 碎碎念

@@ -5,6 +5,7 @@ description: "马上寒假了,回老家了不能更新了!"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2025/01/15/wallhaven-d6zzj3.webp"
 ---
 
 # 茗起

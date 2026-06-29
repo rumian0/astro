@@ -1,12 +1,15 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
 const res = await fetch("https://a.mingcy.cn/js/friend.json");
 const data = await res.json();
 const friends = data.friends || [];
 ---
 
 <Layout title="友链 - 茗辰原" description="茗辰原的友链展示">
-  <main class="mx-auto max-w-5xl px-4 py-12">
+  <Header />
+  <main id="main-content" class="mx-auto max-w-5xl px-4 py-12">
     <h1 class="mb-2 text-center text-3xl font-bold text-white">🌸 友链</h1>
     <p class="mb-8 text-center text-gray-400">认识我的朋友们</p>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -22,6 +25,7 @@ const friends = data.friends || [];
       ))}
     </div>
   </main>
+  <Footer />
 </Layout>
 
 <style is:global>

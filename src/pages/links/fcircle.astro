@@ -1,9 +1,12 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
 ---
 
 <Layout title="朋友动态 - 茗辰原" description="朋友们的最新动态">
-  <main class="mx-auto max-w-5xl px-4 py-12">
+  <Header />
+  <main id="main-content" class="mx-auto max-w-5xl px-4 py-12">
     <h1 class="mb-2 text-center text-3xl font-bold text-white">🔄 朋友动态</h1>
     <p class="mb-8 text-center text-gray-400">了解朋友们在做什么</p>
     <div class="glass-card overflow-hidden rounded-xl" style="height: calc(100vh - 240px);">
@@ -15,6 +18,7 @@ import Layout from "@/layouts/Layout.astro";
       </iframe>
     </div>
   </main>
+  <Footer />
 </Layout>
 
 <style is:global>

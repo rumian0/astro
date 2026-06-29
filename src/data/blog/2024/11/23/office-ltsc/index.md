@@ -5,6 +5,7 @@ description: "Office-2025激活"
 tags: ["激活", "教程"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/10/27/wallhaven-gpeolq.webp"
 ---
 
 ## 起源

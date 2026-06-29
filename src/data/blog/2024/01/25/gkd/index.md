@@ -5,6 +5,7 @@ description: "一个专注于跳过广告的神器"
 tags: ["app,", "安卓应用", "工具", "广告"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/3.webp"
 ---
 
 <aside>

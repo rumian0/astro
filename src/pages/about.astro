@@ -1,9 +1,12 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
 ---
 
 <Layout title="关于 - 茗辰原" description="茗辰原的个人介绍页面">
-  <main class="mx-auto max-w-4xl px-4 py-12">
+  <Header />
+  <main id="main-content" class="mx-auto max-w-4xl px-4 py-12">
     <!-- 头部名片 -->
     <div class="glass-card mb-8 flex flex-col items-center gap-6 rounded-2xl p-8 text-center md:flex-row md:text-left">
       <img src="https://mingcy.cn/image/mcy.png" alt="茗辰原" class="h-32 w-32 flex-shrink-0 rounded-full border-4 border-cyan-400/50 shadow-lg shadow-cyan-500/20" />
@@ -102,6 +105,7 @@ import Layout from "@/layouts/Layout.astro";
       <img src="https://webp.mingcy.cn" alt="random" class="mx-auto mt-4 h-24 w-48 rounded-lg object-cover opacity-70"/>
     </div>
   </main>
+  <Footer />
 </Layout>
 
 <style is:global>

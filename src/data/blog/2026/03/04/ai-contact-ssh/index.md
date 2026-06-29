@@ -5,6 +5,7 @@ description: "让AI替你SSH进服务器，5分钟搞定故障排查！运维人
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/--2d2d1955447890dc.webp"
 ---
 
 # 碎碎念

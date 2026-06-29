@@ -5,6 +5,7 @@ description: ""
 tags: ["锻炼", "生活"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/10/27/wallhaven-zywzdy.webp"
 ---
 
 # 起源

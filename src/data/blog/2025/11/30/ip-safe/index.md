@@ -5,6 +5,7 @@ description: "我在逛公众号的时候,突然发现了这篇文章,转载于�
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/jk--.webp"
 ---
 
 ## 碎碎念

@@ -5,6 +5,7 @@ description: "为了记录开往的周边"
 tags: ["推荐", "记录"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/12.webp"
 ---
 
 <aside>

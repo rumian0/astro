@@ -5,6 +5,7 @@ description: "BLOB图床使用Vercel搭建"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/--c621f61261be11d2.webp"
 ---
 
 # 茗起

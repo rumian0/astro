@@ -5,6 +5,7 @@ description: "只要插入一根铁丝就能免费看电视???"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2025/02/16/wallhaven-o5zgw5.webp"
 ---
 
 # 茗起：揭秘“铁丝免费看电视”背后的门道

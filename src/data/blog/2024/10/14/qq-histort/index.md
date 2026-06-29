@@ -5,6 +5,7 @@ description: "获取QQ历史空间"
 tags: ["实用推荐", "QQ空间", "电脑软件", "开源"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/10/13/cover.webp"
 ---
 
 # 简介

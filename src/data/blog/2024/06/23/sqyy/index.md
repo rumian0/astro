@@ -5,6 +5,7 @@ description: "分享一款集合的神器应用，可以当软件库使用"
 tags: ["app", "安卓应用", "工具"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/20.webp"
 ---
 
 <aside>

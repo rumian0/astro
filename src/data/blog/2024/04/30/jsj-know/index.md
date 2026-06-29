@@ -5,6 +5,7 @@ description: "扩展延深一下有关计算机的基础知识吧！"
 tags: ["实用推荐", "推荐", "计算机"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/13.webp"
 ---
 
 <aside>

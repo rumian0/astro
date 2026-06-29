@@ -5,6 +5,7 @@ description: "本文介绍了如何使用 Vercel 部署 Typecho 博客。"
 tags: ["建站", "网站建站", "计算机"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2024/08/21/23.webp"
 ---
 
 <aside>

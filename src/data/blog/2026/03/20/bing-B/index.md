@@ -5,6 +5,7 @@ description: "Bing免费送B站月卡,快来薅羊毛"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/--8c334e16d7aec891.webp"
 ---
 
 > AI总结

@@ -5,6 +5,7 @@ description: "如果你只能用一个 AI 陪伴你"
 tags: []
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2026/05/23/--1260c478b72d1a8d.webp"
 ---
 
 # 茗述

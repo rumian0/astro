@@ -5,6 +5,7 @@ description: "这样的信息量爆炸的时代,各式各样的虚假商品满�
 tags: ["推荐", "生活"]
 featured: false
 draft: false
+ogImage: "https://view.lixingyong.com/images/2025/03/22/wallhaven-vq7xx3.webp"
 ---
 
 # 茗起
