@@ -13,6 +13,7 @@ import {
   PUBLIC_SOCIAL_X,
   PUBLIC_SOCIAL_LINKEDIN,
   PUBLIC_SOCIAL_EMAIL,
+  PUBLIC_SOCIAL_QQ,
 } from "astro:env/client";
 import { SITE } from "@/config";
 
@@ -55,7 +56,7 @@ export const SOCIALS: Social[] = (
     },
     {
       name: "QQ",
-      href: "https://qm.qq.com/q/mg0A2VRmjC",
+      href: PUBLIC_SOCIAL_QQ ?? "",
       linkTitle: `${SITE.title} on QQ`,
       icon: IconQQ,
     },
