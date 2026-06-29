@@ -224,6 +224,126 @@
     pre {
       @apply focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-dashed;
     }
+
+    /* ═══════ Content Tags: Text Effects ═══════ */
+
+    ins {
+      text-decoration: none;
+      border-bottom: 2px solid #fe5f58;
+    }
+
+    ins.wavy {
+      border-bottom: none;
+      text-decoration: underline wavy #fe5f58;
+      text-underline-offset: 4px;
+    }
+
+    ins.dot {
+      border-bottom: none;
+      text-decoration: underline dotted #fe5f58;
+      text-underline-offset: 4px;
+    }
+
+    ins.primary { border-bottom-color: var(--accent); }
+    ins.success { border-bottom-color: #22c55e; }
+    ins.warning { border-bottom-color: #eab308; }
+    ins.danger  { border-bottom-color: #ef4444; }
+    ins.info    { border-bottom-color: #3b82f6; }
+
+    mark {
+      @apply rounded-sm px-1;
+      background: color-mix(in srgb, #fef08a 60%, transparent);
+      color: inherit;
+    }
+
+    html[data-theme="dark"] mark {
+      background: color-mix(in srgb, #854d0e 50%, transparent);
+    }
+
+    /* ═══════ Keyboard Keys ═══════ */
+
+    kbd {
+      @apply inline-block rounded-md border px-1.5 py-0.5 font-firacode text-xs leading-none;
+      border-color: color-mix(in srgb, var(--foreground) 25%, transparent);
+      background: color-mix(in srgb, var(--foreground) 6%, var(--background));
+      box-shadow:
+        0 1px 0 color-mix(in srgb, var(--foreground) 15%, transparent),
+        inset 0 -1px 0 color-mix(in srgb, var(--foreground) 8%, transparent);
+    }
+
+    /* ═══════ Spoiler ═══════ */
+
+    .spoiler {
+      @apply cursor-pointer select-none rounded-sm px-0.5 transition-all duration-300;
+      background: currentColor;
+      color: transparent;
+    }
+
+    .spoiler:hover {
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+      color: inherit;
+    }
+
+    .spoiler.blur {
+      filter: blur(4px);
+      background: none;
+      color: inherit;
+      transition: filter 0.3s;
+    }
+
+    .spoiler.blur:hover {
+      filter: blur(0);
+    }
+
+    /* ═══════ Colored Text ═══════ */
+
+    .c-red    { color: #ef4444; }
+    .c-pink   { color: #ec4899; }
+    .c-orange { color: #f97316; }
+    .c-yellow { color: #ca8a04; }
+    .c-green  { color: #16a34a; }
+    .c-aqua   { color: #0891b2; }
+    .c-blue   { color: #2563eb; }
+    .c-purple { color: #9333ea; }
+    .c-grey   { color: color-mix(in srgb, var(--foreground) 50%, transparent); }
+
+    /* ═══════ Rainbow Text ═══════ */
+
+    .rainbow {
+      background: linear-gradient(
+        90deg,
+        #ef4444,
+        #f97316,
+        #eab308,
+        #22c55e,
+        #3b82f6,
+        #9333ea,
+        #ef4444
+      );
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbow-shift 3s linear infinite;
+    }
+
+    @keyframes rainbow-shift {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    /* ═══════ Inline Labels ═══════ */
+
+    .label {
+      @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium leading-none no-underline;
+    }
+
+    .label.default  { background: color-mix(in srgb, var(--foreground) 10%, var(--background)); color: var(--foreground); }
+    .label.primary  { background: color-mix(in srgb, var(--accent) 15%, var(--background)); color: var(--accent); }
+    .label.success  { background: color-mix(in srgb, #22c55e 15%, var(--background)); color: #22c55e; }
+    .label.info     { background: color-mix(in srgb, #3b82f6 15%, var(--background)); color: #3b82f6; }
+    .label.warning  { background: color-mix(in srgb, #eab308 15%, var(--background)); color: #ca8a04; }
+    .label.danger   { background: color-mix(in srgb, #ef4444 15%, var(--background)); color: #ef4444; }
   }
 
   /* ===== Code Blocks & Syntax Highlighting ===== */

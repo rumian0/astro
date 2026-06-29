@@ -25,11 +25,14 @@
     "dayjs": "^1.11.20",
     "lodash.kebabcase": "^4.1.1",
     "remark-collapse": "^0.1.2",
+    "remark-ins": "^1.2.5",
+    "remark-supersub": "^1.0.0",
     "remark-toc": "^9.0.0",
     "satori": "^0.26.0",
     "sharp": "^0.34.5",
     "slugify": "^1.6.9",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
@@ -37,6 +40,7 @@
     "@shikijs/transformers": "^4.0.2",
     "@tailwindcss/typography": "^0.5.19",
     "@types/lodash.kebabcase": "^4.1.9",
+    "@types/mdast": "^4.0.4",
     "@typescript-eslint/parser": "^8.59.3",
     "eslint": "^10.3.0",
     "eslint-plugin-astro": "^1.7.0",

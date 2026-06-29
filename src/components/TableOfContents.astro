@@ -1,0 +1,172 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings?: Heading[];
+}
+
+const { headings = [] } = Astro.props;
+
+interface TocItem {
+  indent: number;
+  slug: string;
+  text: string;
+}
+
+const items: TocItem[] = headings
+  .filter((h) => h.depth >= 1 && h.depth <= 5)
+  .map((h) => ({
+    indent: h.depth - 1,
+    slug: h.slug,
+    text: h.text,
+  }));
+---
+
+{
+  items.length > 0 && (
+    <nav class="toc-root w-full">
+      <h2 class="mb-3 font-firacode text-xs font-semibold tracking-widest text-foreground/40 uppercase">
+        目录
+      </h2>
+      <div id="toc-list" class="toc-list flex flex-col">
+        {
+          items.map((item) => (
+            <a
+              href={`#${item.slug}`}
+              class="toc-link group relative flex items-start text-foreground/70 no-underline transition-all duration-200 hover:text-accent"
+              data-indent={item.indent}
+            >
+              {Array.from({ length: item.indent }, (_, _level) => (
+                <span class="toc-line-col flex w-5 shrink-0 flex-col items-center self-stretch">
+                  <span class="toc-line h-full w-px bg-border/30 transition-colors duration-200"></span>
+                </span>
+              ))}
+              <span class="toc-dot mt-[5px] flex w-4 shrink-0 items-center justify-center">
+                <span class="toc-dot-inner block"></span>
+              </span>
+              <span class="toc-text flex-1 py-1.5 text-sm leading-[1.4]">
+                {item.text}
+              </span>
+            </a>
+          ))
+        }
+
+        <a
+          href="#tcomment"
+          class="toc-link group relative flex items-start text-foreground/70 no-underline transition-all duration-200 hover:text-accent"
+          data-indent="1"
+          data-comment
+        >
+          <span class="toc-line-col flex w-5 shrink-0 flex-col items-center self-stretch">
+            <span class="toc-line h-full w-px bg-border/30 transition-colors duration-200"></span>
+          </span>
+          <span class="toc-dot mt-[5px] flex w-4 shrink-0 items-center justify-center">
+            <span class="toc-dot-inner block"></span>
+          </span>
+          <span class="toc-text flex-1 py-1.5 text-sm leading-[1.4]">
+            评论
+          </span>
+        </a>
+      </div>
+    </nav>
+  )
+}
+
+<script>
+  const tocLinks = document.querySelectorAll<HTMLAnchorElement>(".toc-link");
+  const headings = document.querySelectorAll<HTMLElement>(
+    "#article h1, #article h2, #article h3, #article h4, #article h5"
+  );
+
+  if (headings.length > 0 && tocLinks.length > 0) {
+    let activeId: string | null = null;
+
+    const setActive = (id: string | null) => {
+      if (id === activeId) return;
+      activeId = id;
+      tocLinks.forEach((link) => {
+        const href = link.getAttribute("href");
+        if (href && id && href === "#" + id) {
+          link.setAttribute("data-active", "");
+        } else {
+          link.removeAttribute("data-active");
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let topmost: string | null = null;
+        let topmostY = Infinity;
+
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const y = entry.boundingClientRect.top;
+            if (y < topmostY) {
+              topmostY = y;
+              topmost = entry.target.id;
+            }
+          }
+        }
+
+        if (topmost) {
+          setActive(topmost);
+        }
+      },
+      {
+        rootMargin: "-80px 0px -70% 0px",
+      }
+    );
+
+    headings.forEach((h) => observer.observe(h));
+  }
+</script>
+
+<style>
+  .toc-link {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .toc-dot-inner {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    transition: all 0.2s;
+  }
+
+  .toc-link[data-indent="0"] .toc-dot-inner {
+    background: var(--foreground);
+    border: none;
+  }
+
+  .toc-link:not([data-indent="0"]) .toc-dot-inner {
+    border: 2px solid color-mix(in srgb, var(--foreground) 70%, transparent);
+    background: transparent;
+    width: 7px;
+    height: 7px;
+  }
+
+  .toc-link[data-active] {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    color: var(--accent);
+    font-weight: 500;
+    border-radius: 0.375rem;
+  }
+
+  .toc-link[data-active] .toc-line {
+    background: color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+
+  .toc-link[data-active][data-indent="0"] .toc-dot-inner {
+    background: var(--accent);
+  }
+
+  .toc-link[data-active]:not([data-indent="0"]) .toc-dot-inner {
+    border-color: var(--accent);
+  }
+</style>

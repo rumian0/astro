@@ -10,6 +10,7 @@ import Breadcrumb from "@/components/Breadcrumb.astro";
 import BackToTopButton from "@/components/BackToTopButton.astro";
 import GalleryEmbed from "@/components/GalleryEmbed.astro";
 import Twikoo from "@/components/Twikoo.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
 import { getPath } from "@/utils/getPath";
 import { slugifyStr } from "@/utils/slugify";
 import { getReadingTime } from "@/utils/readingTime";
@@ -35,7 +36,7 @@ const {
   hideEditPost,
 } = post.data;
 
-const { Content } = await render(post);
+const { Content, headings = [] } = await render(post);
 const readingTime = post.body ? getReadingTime(post.body) : null;
 
 let ogImageUrl: string | undefined;
@@ -208,6 +209,8 @@ const nextPost =
       </div>
     </header>
 
+    <div class="lg:flex lg:gap-x-8">
+      <div class="lg:min-w-0 lg:flex-1">
     <article
       id="article"
       class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"
@@ -327,6 +330,13 @@ const nextPost =
           </a>
         )
       }
+    </div>
+      </div>
+      <aside class="hidden lg:block lg:w-56 lg:flex-shrink-0">
+        <div class="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+          <TableOfContents headings={headings} />
+        </div>
+      </aside>
     </div>
   </main>
   <Twikoo />

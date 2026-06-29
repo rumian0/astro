@@ -1,0 +1,153 @@
+---
+title: "内容标签使用指南"
+pubDatetime: 2026-06-29T21:00:00.000Z
+description: "文章内联标签系统完整使用文档 — 文字特效、彩色字体、键盘键、黑幕、标签块、彩虹字、链接卡片"
+tags: [字体,外挂标签]
+featured: false
+draft: false
+ogImage: "https://view.lixingyong.com/images/2026/06/10/--eb851cbe70403a2b.webp"
+---
+
+import LinkCard from "@/components/LinkCard.astro";
+
+本文档介绍在文章中可以使用的所有内联标签功能，涵盖文字特效、行内装饰、链接卡片等。所有功能均基于 remark 插件 + 自定义 CSS 实现，适配亮色/暗黑模式。
+
+## 文字特效
+
+### 下划线
+
+使用 `++文字++` 包裹即可生成红色下划线：
+
+这是一段 ++含有下划线的文字++，效果明显。
+
+### 波浪下划线
+
+在 `<ins>` 标签上加 `class="wavy"` 实现波浪线：
+
+这是一段 <ins class="wavy">含有波浪下划线的文字</ins>，像涟漪一样。
+
+### 虚点下划线
+
+在 `<ins>` 标签上加 `class="dot"` 实现虚点线：
+
+这是一段 <ins class="dot">含有虚点下划线的文字</ins>，精致细腻。
+
+### 彩色下划线
+
+`<ins>` 支持多种颜色变体，通过 class 控制：
+
+<ins class="primary">主要色下划线</ins>　
+<ins class="success">成功绿下划线</ins>　
+<ins class="warning">警告黄下划线</ins>　
+<ins class="danger">危险红下划线</ins>　
+<ins class="info">信息蓝下划线</ins>
+
+## 荧光高亮
+
+使用 `==高亮文字==` 包裹产生荧光笔效果：
+
+这是一段 ==荧光高亮== 的文字，在亮色模式下为黄色，暗黑模式下为深琥珀色，护眼醒目。
+
+## 上标与下标
+
+使用 `^上标^` 和 `~下标~` 语法：
+
+水的化学式是 H~2~O，地球表面积约为 510^百万平方公里^。
+
+## 键盘键
+
+使用 `<kbd>` 标签模拟键盘按键的 3D 视觉效果：
+
+使用快捷键 <kbd>Ctrl</kbd> + <kbd>C</kbd> 复制，<kbd>Ctrl</kbd> + <kbd>V</kbd> 粘贴。
+
+## 黑幕（Spoiler）
+
+使用 `<span class="spoiler">` 隐藏敏感内容，鼠标悬停才显示：
+
+下面这句话包含 <span class="spoiler">这是隐藏的黑幕内容，鼠标滑过即可查看</span> 黑幕效果。
+
+### 模糊黑幕
+
+加 `blur` 类实现模糊效果，鼠标悬停变清晰：
+
+<span class="spoiler blur">这段文字默认模糊处理，悬停后变清晰可见</span>
+
+## 彩色文字
+
+使用 `<span class="c-颜色名">` 快速变换字体颜色：
+
+| 类名 | 效果 |
+|---|---|
+| `c-red` | <span class="c-red">红色文字</span> |
+| `c-pink` | <span class="c-pink">粉色文字</span> |
+| `c-orange` | <span class="c-orange">橙色文字</span> |
+| `c-yellow` | <span class="c-yellow">黄色文字</span> |
+| `c-green` | <span class="c-green">绿色文字</span> |
+| `c-aqua` | <span class="c-aqua">青色文字</span> |
+| `c-blue` | <span class="c-blue">蓝色文字</span> |
+| `c-purple` | <span class="c-purple">紫色文字</span> |
+| `c-grey` | <span class="c-grey">灰色文字</span> |
+
+组合使用示例：
+
+<span class="c-red">红色</span>、<span class="c-blue">蓝色</span> 与 <span class="c-purple">紫色</span> 搭配使用，突出重点信息。
+
+## 七彩渐变文字
+
+使用 `<span class="rainbow">` 让文字流动变色：
+
+<span class="rainbow">这是一段七彩渐变的动态文字，流光溢彩。</span>
+
+## 内联标签块
+
+使用 `<span class="label">` 配合颜色变体生成内联标签：
+
+<span class="label default">default</span>　
+<span class="label primary">primary</span>　
+<span class="label success">success</span>　
+<span class="label info">info</span>　
+<span class="label warning">warning</span>　
+<span class="label danger">danger</span>
+
+也可以与彩色文字组合：
+
+<span class="label primary"><span class="c-blue">主要</span>操作</span>　
+<span class="label success">✓ 已完成</span>　
+<span class="label danger">✗ 已失败</span>
+
+## 链接卡片
+
+在 `.mdx` 文件中引入 `LinkCard` 组件，可生成友链风格的链接卡片，包含标题、描述和可选图标：
+
+<LinkCard
+  title="GitHub"
+  url="https://github.com"
+  desc="全球最大的代码托管平台"
+  image="https://github.githubassets.com/favicons/favicon.svg"
+/>
+
+<LinkCard
+  title="Astro"
+  url="https://astro.build"
+  desc="现代化的 Web 框架"
+/>
+
+## 总结
+
+所有功能一览：
+
+| 功能 | 语法 | 说明 |
+|---|---|---|
+| 下划线 | `++文字++` | 红色下划线 |
+| 波浪线 | `<ins class="wavy">文字</ins>` | 波浪装饰下划线 |
+| 虚点线 | `<ins class="dot">文字</ins>` | 虚点装饰下划线 |
+| 荧光高亮 | `==文字==` | 荧光笔 |
+| 上标 | `^文字^` | 上角标 |
+| 下标 | `~文字~` | 下角标 |
+| 彩色文字 | `<span class="c-red">文字</span>` | 9 种颜色可选 |
+| 七彩文字 | `<span class="rainbow">文字</span>` | 动态渐变色 |
+| 键盘键 | `<kbd>Ctrl</kbd>` | 3D 按键效果 |
+| 黑幕 | `<span class="spoiler">文字</span>` | 悬停显示 |
+| 模糊黑幕 | `<span class="spoiler blur">文字</span>` | 悬停变清晰 |
+| 内联标签 | `<span class="label primary">文字</span>` | 6 种颜色变体 |
+| 链接卡片 | `<LinkCard title="" url="" desc="" image="" />` | 仅 `.mdx` 文章可用 |

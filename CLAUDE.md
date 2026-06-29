@@ -67,3 +67,56 @@ pnpm run deploy        # 构建 + 提交 + 推送 GitHub
 - Footer 社交区增加 QQ 联系链接（图标为简化版企鹅轮廓 SVG）
 - `/links/fcircle/` 页面：iframe 无边框全屏嵌入，移除所有包裹元素和状态区块
 - `/links/apply/` 页面：添加「一键填充」按钮，可自动填入申请格式到评论框
+
+## 文章侧边目录（TableOfContents）
+
+- 组件：`src/components/TableOfContents.astro`
+- 在 `PostDetails.astro` 中通过 `render()` 的 `headings` 字段获取文章 h1~h5 标题
+- 布局：`lg:flex lg:gap-x-8` 并在右侧 `lg:w-56` 固定侧边栏（`sticky top-24`）
+- 树形视觉：每位条目渲染 `indent` 列竖线（h1=0 列，h2=1 列，h3=2 列...），竖线使用 `bg-border/30`，通过 `self-stretch` + `flex-1` 贯穿条目整高
+- 圆点：h1 为实心 `bg-foreground`，h2~h5 为空心 `border-foreground/70`
+- 激活态：`IntersectionObserver` 监听 `#article h1~h5`，当前可见标题对应条目高亮（`bg-accent/8 text-accent font-medium`，竖线变为 `accent/50`）
+- 底部固定「评论」条目，点击平滑滚动到 `#tcomment`
+- 所有色彩使用 Tailwind 主题变量（`text-foreground`、`border-border`、`bg-accent/8` 等），适配亮色/暗黑模式
+- 已从 `astro.config.ts` 中移除 `remark-toc` 和 `remark-collapse`（不再有嵌入式目录，与侧边目录冲突）
+- typography.css 中对应的嵌入式 TOC 样式（`details` / `summary` / 嵌套列表）为死代码，可清理
+
+## 文章内容标签系统
+
+支持在文章中使用 remark 插件 + 行内 HTML + MDX 组件实现丰富的内容装饰。
+
+### 文字特效（remark 插件，`.md` / `.mdx` 通用）
+
+| 语法 | 效果 | 插件 |
+|---|---|---|
+| `++文字++` | 红色下划线 `<ins>` | `remark-ins` |
+| `==文字==` | 荧光高亮 `<mark>` | 自定义 `remark-mark`（`src/utils/remark-mark.ts`） |
+| `H~2~O` / `29^th^` | 上下标 | `remark-supersub` |
+
+### 行内标签（HTML，`.md` / `.mdx` 通用）
+
+| 写法 | 效果 | CSS 类 |
+|---|---|---|
+| `<ins class="wavy">` | 波浪下划线 | `ins.wavy` |
+| `<ins class="dot">` | 虚点下划线 | `ins.dot` |
+| `<ins class="primary/success/warning/danger/info">` | 彩色下划线 | `ins.primary` 等 |
+| `<span class="c-red/c-blue/...">` | 彩色文字（9 色） | `.c-red` `.c-blue` `.c-green` `.c-purple` 等 |
+| `<span class="rainbow">` | 七彩渐变流动文字 | `.rainbow` |
+| `<kbd>Ctrl</kbd>` | 键盘键 3D 样式 | `kbd` |
+| `<span class="spoiler">` | 黑幕遮罩（悬停显示） | `.spoiler` |
+| `<span class="spoiler blur">` | 模糊遮罩（悬停清晰） | `.spoiler.blur` |
+| `<span class="label primary/...">` | 内联标签（6 色） | `.label` + `.primary/.success/.info/.warning/.danger` |
+
+### 链接卡片（仅 `.mdx`）
+
+- 组件：`src/components/LinkCard.astro`
+- 使用：`import LinkCard from "@/components/LinkCard.astro"`
+- 属性：`title`（必填）、`url`（必填）、`desc`（可选）、`image`（可选）
+- 样式：友链风格方框卡片，hover 上浮 + 阴影，双列自适应
+
+### 配置位置
+
+- remark 插件配置：`astro.config.ts` 的 `markdown.remarkPlugins`
+- 所有视觉样式：`src/styles/typography.css` 的 `.app-prose` 块内
+- 自定义 remark-mark 插件：`src/utils/remark-mark.ts`
+- 类型声明：`src/utils/remark-plugin-types.d.ts`

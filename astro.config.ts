@@ -2,8 +2,10 @@ import { defineConfig, envField, fontProviders } from "astro/config";
 import mdx from "@astrojs/mdx";
 import tailwindcss from "@tailwindcss/vite";
 import sitemap from "@astrojs/sitemap";
-import remarkToc from "remark-toc";
-import remarkCollapse from "remark-collapse";
+// 目录由 TableOfContents.astro 侧边组件实现 (removed remark-toc/remark-collapse)
+import remarkIns from "remark-ins";
+import remarkMark from "./src/utils/remark-mark";
+import remarkSupersub from "remark-supersub";
 import {
   transformerNotationDiff,
   transformerNotationHighlight,
@@ -28,7 +30,7 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    remarkPlugins: [remarkToc, [remarkCollapse, { test: "Table of contents" }]],
+    remarkPlugins: [remarkIns, remarkMark, remarkSupersub],
     shikiConfig: {
       // For more themes, visit https://shiki.style/themes
       themes: { light: "min-light", dark: "github-dark-default" },
