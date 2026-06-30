@@ -109,7 +109,7 @@ const gallerySchema = {
             </span>
           </div>
           
-          <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-5xl xl:text-6xl text-foreground" style={{ viewTransitionName: slugifyStr(String(title).replaceAll(".", "-")) }}>
+          <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-5xl xl:text-6xl text-foreground" transition:name={slugifyStr(title)}>
             {title}
           </h1>
           

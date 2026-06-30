@@ -37,7 +37,7 @@ const href = getEntryPath({ collection, id, filePath, data });
 const isGallery = collection === "galleries";
 const headingId = `${collection}-${slugifyStr(String(id))}-title`;
 const descriptionId = `${collection}-${slugifyStr(String(id))}-description`;
-const viewTransitionName = slugifyStr(String(title).replaceAll(".", "-"));
+const viewTransitionName = slugifyStr(title);
 const readingTime = body ? getReadingTime(body) : null;
 
 // Resolve cover image source
@@ -171,7 +171,7 @@ if (SITE.showCoverImages) {
       ]}
       aria-labelledby={headingId}
       aria-describedby={descriptionId}
-      style={{ viewTransitionName }}
+      transition:name={viewTransitionName}
     >
       <Heading id={headingId} class="flex items-center gap-2">
         {isGallery && (

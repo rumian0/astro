@@ -4,7 +4,7 @@
 
 ## 技术栈
 - 语言：TypeScript
-- 框架：Astro 5
+- 框架：Astro 6
 - 包管理：pnpm
 - 样式：Tailwind CSS + 局部 CSS
 - 评论：Twikoo（CDN 加载）
@@ -28,16 +28,23 @@ pnpm run lint          # 代码检查（如已配置）
 ```
 
 ## 项目结构
-- `src/config.ts` — 站点全局配置（标题、社交、功能开关等）
-- `src/content.config.ts` — 内容集合定义（blog + galleries）
-- `src/data/blog/` — 博客文章，路径格式：`slug/index.md`（flat 结构）
-- `src/data/galleries/` — 相册内容
-- `src/data/links.ts` — 本地友链数据
-- `src/layouts/` — 页面布局组件（Layout, PostDetails, AboutLayout）
-- `src/pages/` — 路由页面（首页、关于、友链、文章列表等）
-- `src/pages/[...slug]/index.astro` — 文章详情页（路由为 `/YYYY/MM/DD/slug/`）
-- `src/components/` — 可复用组件（Header, Footer, Card, Twikoo 等）
-- `scripts/` — 工具脚本（迁移、新建文章、部署等）
+- ├── src/
+  │   ├── config.ts              # 全局配置（站点信息、功能开关等）
+  │   ├── content.config.ts      # 内容集合配置
+  │   ├── data/
+  │   │   ├── blog/              # 博客文章（.md / .mdx）
+  │   │   └── galleries/         # 相册数据
+  │   ├── components/            # UI 组件
+  │   ├── layouts/               # 页面布局
+  │   ├── pages/                 # 路由页面
+  │   ├── assets/                # 字体等静态资源
+  │   ├── styles/                # 全局样式
+  │   └── utils/                 # 工具函数
+  ├── public/                    # 公共静态资源
+  ├── dist/                      # 构建输出
+  ├── astro.config.ts            # Astro 配置
+  ├── package.json               # 依赖和脚本
+  └── .env.example               # 环境变量模板
 
 ## 编码规范
 - 使用 `pnpm` 管理依赖
@@ -130,3 +137,25 @@ pnpm run deploy        # 构建 + 提交 + 推送 GitHub
 - 所有视觉样式：`src/styles/typography.css` 的 `.app-prose` 块内
 - 自定义 remark-mark 插件：`src/utils/remark-mark.ts`
 - 类型声明：`src/utils/remark-plugin-types.d.ts`
+
+## 修改记录
+
+### 2026-06-30 联系方式 & 页面过渡优化
+
+#### 移除了 QQ 社交链接
+- `src/constants.ts`：从 `SOCIALS` 数组中移除了 QQ 条目，其余 4 个（GitHub、X、LinkedIn、Mail）保持从 `.env` 读取
+
+#### 统一 View Transition Name 为 Astro 指令
+- `src/components/Card.astro`：`style={{ viewTransitionName }}` → `transition:name` 指令
+- `src/pages/galleries/[gallery].astro`：同上
+- `src/pages/archives/index.astro`：同上
+- 统一匹配 `slugifyStr(title)` 逻辑，消除 `.replaceAll(".", "-")` 差异
+
+#### 环境变量保持 process.env 方式
+- `src/config.ts` 被 `astro.config.ts` 加载，`astro:env/client` 在此上下文中不可用
+- 保留 `process.env.*` 方式不变（build-time 正常工作）
+
+#### 添加 View Transitions 动画
+- `src/styles/global.css`：添加页面过渡动画（vt-slide-out/vt-slide-in）
+- 添加 shared element 淡入淡出动画
+- 适配 `prefers-reduced-motion`
