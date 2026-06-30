@@ -5,7 +5,7 @@ description: "Twikoo更新了图床的配置,这期教你如何配置图床S3/R2
 tags: []
 featured: false
 draft: false
-ogImage: "https://r2.mingcy.cn/NASA-%E5%9C%B0%E7%90%83-%E5%A4%AA%E7%A9%BA.webp"
+ogImage: "https://r2.mingcy.cn/NASA-%E5%9C%B0%E7%90%83-%E5%A4%AA%E7%A9%BA_VeryPixel.webp"
 ---
 
 # 茗叙
