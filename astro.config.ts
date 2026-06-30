@@ -2,6 +2,7 @@ import { defineConfig, envField, fontProviders } from "astro/config";
 import mdx from "@astrojs/mdx";
 import tailwindcss from "@tailwindcss/vite";
 import sitemap from "@astrojs/sitemap";
+import vercel from "@astrojs/vercel";
 // 目录由 TableOfContents.astro 侧边组件实现 (removed remark-toc/remark-collapse)
 import remarkIns from "remark-ins";
 import remarkMark from "./src/utils/remark-mark";
@@ -16,6 +17,12 @@ import { SITE } from "./src/config";
 
 // https://astro.build/config
 export default defineConfig({
+  output: "static",
+  adapter: vercel({
+    webAnalytics: {
+      enabled: true,
+    },
+  }),
   site: SITE.website,
   prefetch: {
     prefetchAll: true,
