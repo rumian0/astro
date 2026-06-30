@@ -338,6 +338,36 @@ html[data-theme="dark"] #twikoo .tk-comment {
   animation: vt-fade-in 0.35s ease-out 0.08s both;
 }
 
+/* Mobile / touch devices: lighter fade-only transitions (no translateY) */
+@media (pointer: coarse) {
+  ::view-transition-old(root) {
+    animation: vt-fade-out 0.15s ease-out both;
+  }
+
+  ::view-transition-new(root) {
+    animation: vt-fade-in 0.2s ease-out both;
+  }
+
+  ::view-transition-old(*) {
+    animation: vt-fade-out 0.1s ease-out both;
+  }
+
+  ::view-transition-new(*) {
+    animation: vt-fade-in 0.2s ease-out 0.05s both;
+  }
+}
+
+/* Browsers not supporting @property (X5 etc): fallback for conic-gradient animations */
+@supports not (--custom: value) {
+  .modal-border-glow,
+  .avatar-ring {
+    animation: none !important;
+  }
+  .modal-aurora-orb {
+    animation: none !important;
+  }
+}
+
 @keyframes vt-slide-out {
   from {
     opacity: 1;
@@ -369,6 +399,44 @@ html[data-theme="dark"] #twikoo .tk-comment {
 @keyframes vt-fade-in {
   from {
     opacity: 0;
+  }
+}
+
+/* ═══════ Mobile Performance Overrides ═══════ */
+
+/* Touch devices: remove expensive backdrop-filter, use solid background */
+@media (pointer: coarse) {
+  .header-scrolled-filter,
+  .footer-wrapper,
+  .search-modal-header,
+  .search-modal-footer,
+  .mobile-menu-panel,
+  .mobile-action-btn,
+  .pagination-btn {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* grain noise is expensive on mobile GPU — hide */
+  .site-grain {
+    display: none !important;
+  }
+}
+
+/* X5 / old WebView: feature-detect and remove backdrop-filter entirely */
+@supports not (backdrop-filter: blur(1px)) {
+  .header-scrolled-filter,
+  .footer-wrapper,
+  .search-modal-header,
+  .search-modal-footer,
+  .mobile-menu-panel,
+  .mobile-action-btn,
+  .pagination-btn {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .site-grain {
+    display: none !important;
   }
 }
 

@@ -250,7 +250,7 @@ const showGrain = SITE.backdropEffects.grain;
     <div class="site-backdrop pointer-events-none" aria-hidden="true" transition:persist>
       <div class="site-grid"></div>
       {showCursorGlow && <div class="site-cursor-glow"></div>}
-      {showGrain && <div class="site-grain"></div>}
+      {showGrain && <div class="site-grain hidden-mobile"></div>}
     </div>
 
     <slot />
@@ -346,6 +346,12 @@ const showGrain = SITE.backdropEffects.grain;
     mix-blend-mode: overlay;
     pointer-events: none;
     contain: paint;
+  }
+
+  @media (pointer: coarse) {
+    .hidden-mobile {
+      display: none !important;
+    }
   }
 </style>
 

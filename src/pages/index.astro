@@ -220,6 +220,13 @@ const recentPosts = sortedPosts.filter(({ data }) => !("featured" in data && dat
       background-position: 100% center;
     }
   }
+
+  /* Mobile: disable shimmer animation to save GPU */
+  @media (pointer: coarse) {
+    .hero-title {
+      animation: none;
+    }
+  }
 </style>
 
 <script>
@@ -230,13 +237,15 @@ const recentPosts = sortedPosts.filter(({ data }) => !("featured" in data && dat
       sessionStorage.setItem("backUrl", "/");
     }
 
-    // ── Card glow follow cursor ──
-    document.querySelectorAll<HTMLElement>(".card-glow").forEach(card => {
-      card.addEventListener("mousemove", (e: MouseEvent) => {
-        const rect = card.getBoundingClientRect();
-        card.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-        card.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+    // ── Card glow follow cursor (skip on touch devices) ──
+    if (!window.matchMedia("(pointer: coarse)").matches) {
+      document.querySelectorAll<HTMLElement>(".card-glow").forEach(card => {
+        card.addEventListener("mousemove", (e: MouseEvent) => {
+          const rect = card.getBoundingClientRect();
+          card.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+          card.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+        });
       });
-    });
+    }
   });
 </script>

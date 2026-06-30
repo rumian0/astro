@@ -562,6 +562,31 @@ import "@pagefind/default-ui/css/ui.css";
     }
   }
 
+  /* Pause all decorative animations when modal is hidden */
+  .search-modal-overlay:not(.active) .modal-aurora-orb,
+  .search-modal-overlay:not(.active) .modal-sparkle,
+  .search-modal-overlay:not(.active) .modal-border-glow {
+    animation-play-state: paused !important;
+  }
+
+  /* Mobile / X5: remove heavy filter-blur and will-change on orbs */
+  @media (pointer: coarse) {
+    .modal-aurora-orb {
+      filter: none;
+      will-change: auto;
+      opacity: 0.3;
+    }
+    .modal-sparkle {
+      display: none;
+    }
+    .modal-cursor-glow {
+      display: none;
+    }
+    .modal-border-glow {
+      display: none;
+    }
+  }
+
   /* ===== Animated border glow ===== */
   .modal-border-glow {
     position: absolute;

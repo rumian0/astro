@@ -19,7 +19,7 @@ export default defineConfig({
   site: SITE.website,
   prefetch: {
     prefetchAll: true,
-    defaultStrategy: "hover",
+    defaultStrategy: "tap",
   },
   integrations: [
     mdx({

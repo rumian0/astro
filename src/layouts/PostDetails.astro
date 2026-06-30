@@ -341,129 +341,93 @@ const nextPost =
 </Layout>
 
 <script is:inline data-astro-rerun>
-  /** Create a progress indicator
-   *  at the top */
-  function createProgressBar() {
-    // Guard: avoid duplicating the bar on View Transitions re-runs
-    if (document.querySelector(".progress-container")) return;
+  /* Go to page start after page swap — runs on every page */
+  document.addEventListener("astro:after-swap", () =>
+    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
+  );
 
-    const progressContainer = document.createElement("div");
-    progressContainer.className =
-      "progress-container fixed top-0 z-50 h-1 w-full bg-background";
+  /* Post-detail-only features: run only when #article exists */
+  const articleEl = document.getElementById("article");
+  if (articleEl) {
+    /** Create a progress indicator at the top */
+    (function createProgressBar() {
+      if (document.querySelector(".progress-container")) return;
+      const progressContainer = document.createElement("div");
+      progressContainer.className = "progress-container fixed top-0 z-50 h-1 w-full bg-background";
+      const progressBar = document.createElement("div");
+      progressBar.className = "progress-bar h-1 w-0 bg-accent";
+      progressBar.id = "myBar";
+      progressContainer.appendChild(progressBar);
+      document.body.appendChild(progressContainer);
+    })();
 
-    const progressBar = document.createElement("div");
-    progressBar.className = "progress-bar h-1 w-0 bg-accent";
-    progressBar.id = "myBar";
-
-    progressContainer.appendChild(progressBar);
-    document.body.appendChild(progressContainer);
-  }
-  createProgressBar();
-
-  /** Update the progress bar
-   *  when user scrolls */
-  function updateScrollProgress() {
-    const myBar = document.getElementById("myBar"); // cache ref once
-    if (!myBar) return;
-
-    let ticking = false;
-    document.addEventListener(
-      "scroll",
-      () => {
+    /** Update the progress bar when user scrolls */
+    (function updateScrollProgress() {
+      const myBar = document.getElementById("myBar");
+      if (!myBar) return;
+      let ticking = false;
+      document.addEventListener("scroll", () => {
         if (!ticking) {
           requestAnimationFrame(() => {
             const winScroll = document.documentElement.scrollTop;
-            const height =
-              document.documentElement.scrollHeight -
-              document.documentElement.clientHeight;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             myBar.style.width = ((winScroll / height) * 100) + "%";
             ticking = false;
           });
           ticking = true;
         }
-      },
-      { passive: true } // lets the browser optimise scroll handling
-    );
-  }
-  updateScrollProgress();
+      }, { passive: true });
+    })();
 
-  /** Attaches links to headings in the document,
-   *  allowing sharing of sections easily */
-  function addHeadingLinks() {
-    const headings = Array.from(
-      document.querySelectorAll("h2, h3, h4, h5, h6")
-    );
-    for (const heading of headings) {
-      heading.classList.add("group");
-      const link = document.createElement("a");
-      link.className =
-        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
-      link.href = "#" + heading.id;
+    /** Attach heading anchor links */
+    (function addHeadingLinks() {
+      const headings = document.querySelectorAll("h2, h3, h4, h5, h6");
+      for (const heading of headings) {
+        if (!heading.id) continue;
+        heading.classList.add("group");
+        const link = document.createElement("a");
+        link.className = "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
+        link.href = "#" + heading.id;
+        const span = document.createElement("span");
+        span.ariaHidden = "true";
+        span.innerText = "#";
+        link.appendChild(span);
+        link.ariaLabel = "link to heading";
+        heading.appendChild(link);
+      }
+    })();
 
-      const span = document.createElement("span");
-      span.ariaHidden = "true";
-      span.innerText = "#";
-      link.appendChild(span);
-      link.ariaLabel = "link to heading";
-      heading.appendChild(link);
-    }
-  }
-  addHeadingLinks();
+    /** Attach copy buttons to code blocks */
+    (function attachCopyButtons() {
+      const copyButtonLabel = "Copy";
+      const codeBlocks = Array.from(document.querySelectorAll("pre"));
+      if (codeBlocks.length === 0) return;
 
-  /** Attaches copy buttons to code blocks in the document,
-   * allowing users to copy code easily. */
-  function attachCopyButtons() {
-    const copyButtonLabel = "Copy";
-    const codeBlocks = Array.from(document.querySelectorAll("pre"));
+      const topClasses = codeBlocks.map(cb =>
+        getComputedStyle(cb).getPropertyValue("--file-name-offset").trim() !== ""
+          ? "top-(--file-name-offset)"
+          : "-top-3"
+      );
 
-    // Pass 1: read all computed styles before touching the DOM
-    // (avoids a forced reflow on every iteration of the loop)
-    const topClasses = codeBlocks.map(cb =>
-      getComputedStyle(cb).getPropertyValue("--file-name-offset").trim() !== ""
-        ? "top-(--file-name-offset)"
-        : "-top-3"
-    );
-
-    // Pass 2: mutate DOM
-    codeBlocks.forEach((codeBlock, i) => {
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "relative";
-
-      const copyButton = document.createElement("button");
-      copyButton.className = `copy-code absolute end-3 ${topClasses[i]} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
-      copyButton.innerHTML = copyButtonLabel;
-      codeBlock.setAttribute("tabindex", "0");
-      codeBlock.appendChild(copyButton);
-
-      // wrap codeblock with relative parent element
-      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
-      wrapper.appendChild(codeBlock);
-
-      copyButton.addEventListener("click", async () => {
-        await copyCode(codeBlock, copyButton);
+      codeBlocks.forEach((codeBlock, i) => {
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "relative";
+        const copyButton = document.createElement("button");
+        copyButton.className = `copy-code absolute end-3 ${topClasses[i]} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+        copyButton.innerHTML = copyButtonLabel;
+        codeBlock.setAttribute("tabindex", "0");
+        codeBlock.appendChild(copyButton);
+        codeBlock.parentNode?.insertBefore(wrapper, codeBlock);
+        wrapper.appendChild(codeBlock);
+        copyButton.addEventListener("click", async () => {
+          const code = codeBlock.querySelector("code");
+          await navigator.clipboard.writeText(code?.innerText ?? "");
+          copyButton.innerText = "Copied";
+          setTimeout(() => { copyButton.innerText = copyButtonLabel; }, 700);
+        });
       });
-    });
-
-    async function copyCode(block, button) {
-      const code = block.querySelector("code");
-      const text = code?.innerText;
-
-      await navigator.clipboard.writeText(text ?? "");
-
-      // visual feedback that task is completed
-      button.innerText = "Copied";
-
-      setTimeout(() => {
-        button.innerText = copyButtonLabel;
-      }, 700);
-    }
+    })();
   }
-  attachCopyButtons();
-
-  /* Go to page start after page swap */
-  document.addEventListener("astro:after-swap", () =>
-    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
-  );
 </script>
 
 <style>

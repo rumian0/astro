@@ -185,7 +185,9 @@ const { noMarginTop = false, class: className, ...attrs } = Astro.props;
   function startRuntime() {
     clearInterval(rtInterval);
     updateRunningTime();
-    rtInterval = setInterval(updateRunningTime, 10000);
+    // Mobile: update less frequently to reduce main-thread pressure
+    var interval = window.matchMedia("(pointer: coarse)").matches ? 30000 : 10000;
+    rtInterval = setInterval(updateRunningTime, interval);
   }
 
   document.addEventListener("astro:before-swap", function () {
