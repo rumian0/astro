@@ -2171,3 +2171,62 @@ type RemoteManifest = {
 - ③ `galleries/index.astro` 的相册卡片封面只看**本地**图片（`getGalleryImages` glob `/src/content/galleries/**/*.{jpg,...}`），CDN 相册没有本地文件 → 卡片显示占位 SVG 图标且无「N 张照片」计数。**person-life 与 Love-eyes 都是这个状态**（本轮引入但未修，属既有局限，等确认再改）
 - ④ `upload/` 目录里的 24 个拆分素材已删（上传完成后被清理）；`upload/` 仍留在 `.gitignore`，下次拆素材可继续用同一位置
 - ⑤ 分离模式的封面是**原始 JPEG 切片**，未转 webp（本机无 sharp/ffmpeg）；若要再压 30% 需另装依赖或改用 CDN 图片处理参数
+
+---
+
+### 2026-10-13 - 文章图片点击放大修复：运行时注入 data-src 让 Fancybox 取到图片源
+
+**背景：** 用户要求为文章功能添加点击图片放大功能。排查发现项目**早已接入 Fancybox 6**（本地化 `public/fancybox/`，`Layout.astro` 有 `initFancybox()` 全站初始化，相册页实况灯箱也在用），`src/plugins/rehypeImage.js` 也已给每张文章 `<img>` 加了 `data-fancybox="article"` + `data-caption`。**但点击不弹灯箱** —— 根因在 Fancybox 6 的取源机制。
+
+**根因（对照官方文档确认）：** Fancybox 6 的触发元素必须用 **`href` 或 `data-src`** 指定要显示的大图源（官方文档反复强调「Use `href` or `data-src` attribute to specify the content source」），所有官方示例都是 `<a href="image.jpeg" data-fancybox><img src="thumb"></a>`。而当前文章图片经 rehype + Astro 图片优化后渲染为：
+
+```html
+<figure>
+  <img src="/_astro/image-xxx.webp" data-fancybox="article" data-caption="官网截图" />
+</figure>
+```
+
+`<img>` 上**只有 `data-fancybox`，没有 `href` 也没有 `data-src`** → Fancybox 取不到源 → 点击无反应（或弹空）。dist 实测 `deepseek-harness` 文章页每张图都是这个状态。
+
+**为什么不在 rehype 阶段直接加 data-src / 包 `<a>`：**
+
+- **rehype 阶段 img.src 还是 markdown 原始路径**（`./x.webp`），而 Astro 图片优化在更后面的阶段才把 img.src 改写成 `/_astro/x.hash.webp`。rehype 阶段写 `data-src` 会停留在原始相对路径，按文章 URL（`/2026/08/16/slug`）解析后大概率 404。
+- **包 `<a href>` 同理**：`<a>` 的 href 不被 Astro 图片优化改写，会停留在原始路径，与 img 最终 src 不一致。
+- **包 `<a>` 还会引入 Swup 坑**：Swup 的 delegate-it 会把图片链接当页面导航拦截（见 2026-09-17 记录），需额外 `data-no-swup`，徒增复杂度。
+
+**最终方案：运行时注入 data-src（最小改动，1 处）。** 在 `Layout.astro` 的 `initFancybox()` 里，`Fancybox.unbind` 之后、`Fancybox.bind` 之前插入：
+
+```js
+// 文章页普通图片：<img data-fancybox> 上无 href/data-src，Fancybox 取不到
+// 大图源。运行时用 img 的最终 src（Astro 图片优化已改写成 /_astro/x.hash.webp）
+// 补 data-src。currentSrc 优先（响应 srcset 选中的图），回退 src 属性。
+document.querySelectorAll('img[data-fancybox]:not([data-src])').forEach(function (img) {
+  var src = img.currentSrc || img.getAttribute('src') || ''
+  if (src) img.setAttribute('data-src', src)
+})
+```
+
+**关键决策理由：**
+
+- 运行时 `img.currentSrc`（或 `img.src`）已是 Astro 优化后的最终 URL（`/_astro/x.hash.webp`），绝对可靠，不存在相对路径解析问题
+- `img` 本身就是缩略图，Fancybox 6 的 `zoomEffect` 放大动画能正确从缩略图定位
+- 选择器 `img[data-fancybox]:not([data-src])` 限定只命中 img 上的 data-fancybox —— 相册实况项的 `data-pvt/data-motion/data-video` 都在 `<a>` 上、相册静态项 img 本来就没 `data-fancybox`，**均不会误伤**
+- 已有的 `data-caption` 由 Fancybox `Caption: { type: 'auto' }` 读取，无需改动
+- 不改 rehype、不包 `<a>`、不碰 Swup、不影响相册实况灯箱逻辑
+
+**修改文件：** `src/layouts/Layout.astro`（仅 1 处，约 8 行）
+
+**功能链路：** 页面加载 → `initFancybox()` → `Fancybox.unbind` 清旧绑定 → 给实况项注 `data-html` 骨架 → **给文章 img 注 `data-src` = 最终 src** → `Fancybox.bind('[data-fancybox]')` 绑定 click → 点击文章图片 → Fancybox 取 `data-src` → 弹出放大图（左右滑动 / 无限循环 / 键盘方向键 / Caption 显示 alt）
+
+**验证：** `astro check` 114 files / 0 errors / 0 warnings / 0 hints；`astro build` 213 pages Complete（69.94s）。dist 核验：
+
+- 文章页 SSR 态 `<img data-fancybox="article" data-caption="...">` 保留（无 data-src，符合预期，由运行时补）
+- 运行时注入脚本在产物：`img[data-fancybox]:not([data-src])` 选择器 + `img.currentSrc` → `setAttribute('data-src', ...)` 逻辑均在（含注释共 2 处匹配）
+- 相册页不受影响：`junxun` 静态项 img 无 `data-fancybox`（data-fancybox 在外层 `<a>` 上）；`person-life` 实况项 `data-pvt/data-motion` 也在 `<a>` 上、img 无 `data-fancybox` → 选择器不会误伤
+
+**注意：**
+
+- ① 放大显示的是 Astro 优化后的 webp（`/_astro/x.hash.webp`），质量足够；若要显示**原图**需在 rehype 阶段额外保留原图路径（Astro 图片优化不暴露原图 URL），是另一个改动，本次未做
+- ② Fancybox 6 的 `data-fancybox` 放在 `<img>` 上时**必须配 `data-src` 或 `href`** 才能取源 —— 这是官方文档明确的，之前 rehype 只加 `data-fancybox` + `data-caption` 漏了取源属性，是这次 bug 的直接原因
+- ③ 本次只补 `data-src`，不重构 rehype 包 `<a>`，避免引入 Swup 图片链接导航坑（2026-09-17 教训）与相对路径 404 坑
+- ④ 首次访问慢 / EBUSY 构建报错与本次改动无关（图片优化固有成本 + 文件锁），清 dist 重跑即过

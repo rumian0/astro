@@ -950,6 +950,15 @@ const { title, description, image } = Astro.props
           document.querySelectorAll('[data-fancybox][data-pvt]:not([data-html]), [data-fancybox][data-motion]:not([data-html]), [data-fancybox][data-video]:not([data-html])').forEach(function (el) {
             el.setAttribute('data-html', '<div class="lp-player"></div>')
           })
+          // 文章页普通图片：<img data-fancybox> 上无 href/data-src，Fancybox 取不到
+          // 大图源。运行时用 img 的最终 src（Astro 图片优化已改写成 /_astro/x.hash.webp）
+          // 补 data-src。currentSrc 优先（响应 srcset 选中的图），回退 src 属性。
+          // 选择器限定 img[data-fancybox]:not([data-src]) —— 相册实况项的 data-* 在 <a>
+          // 上、相册静态项 img 无 data-fancybox，均不会误伤。
+          document.querySelectorAll('img[data-fancybox]:not([data-src])').forEach(function (img) {
+            var src = img.currentSrc || img.getAttribute('src') || ''
+            if (src) img.setAttribute('data-src', src)
+          })
           Fancybox.bind('[data-fancybox]', {
             touch: { vertical: true },
             Carousel: { infinite: true },
