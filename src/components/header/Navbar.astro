@@ -33,9 +33,6 @@ const NAV_LINKS: NavItem[] = [
       { label: '首页', href: '/' },
       { label: '项目', href: '/projects' },
       { label: '工具', href: '/tools' },
-      { label: '笔记', href: 'https://e.mingcy.cn', external: true },
-      { label: '编辑', href: 'https://markdown.mingcy.cn', external: true },
-      { label: '集合', href: 'https://h.mingcy.cn', external: true },
     ],
   },
   {
@@ -80,21 +77,21 @@ function isGroupActive(items: NavLink[]): boolean {
         <!-- 左胶囊：Logo 独立浮起 -->
         <div class="navbar__float navbar__float-left">
           <a href="/" class="navbar__logo group" aria-label="Ming{·}CY，回到首页">
-            <svg class="logo-svg dark:invert" viewBox="0 0 800 250" aria-hidden="true">
+            <svg class="logo-svg" viewBox="0 0 800 250" aria-hidden="true">
               <g transform="matrix(1.112155, 0, 0, 1.112155, 12.50231, -14.050506)" id="object-0">
                 <text
                   class="logo-text-left"
-                  style="fill: rgb(51, 51, 51); font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 150px; font-weight: 600; letter-spacing: -0.04em; white-space: pre;"
+                  style="font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 150px; font-weight: 600; letter-spacing: -0.04em; white-space: pre;"
                   x="0"
                   y="176.957">Ming</text>
                 <text
                   class="logo-sphere"
-                  style="fill: rgb(167, 90, 90); font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 150px; font-weight: 600; letter-spacing: -30px; paint-order: stroke; white-space: pre;"
+                  style="font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 150px; font-weight: 600; letter-spacing: -30px; paint-order: stroke; white-space: pre;"
                   x="360"
                   y="176.957">·</text>
                 <text
                   class="logo-text-right"
-                  style="fill: rgb(51, 51, 51); font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 150px; font-weight: 600; letter-spacing: -0.04em; white-space: pre;"
+                  style="font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 150px; font-weight: 600; letter-spacing: -0.04em; white-space: pre;"
                   x="500"
                   y="176.957">CY</text>
               </g>
@@ -157,7 +154,7 @@ function isGroupActive(items: NavLink[]): boolean {
             </li>
           </ul>
 
-          <button type="button" class="navbar__icon-btn" aria-label="搜索">
+          <button type="button" id="search-btn" class="navbar__icon-btn" aria-label="搜索">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -424,17 +421,30 @@ function isGroupActive(items: NavLink[]): boolean {
     width: 7rem;
     height: auto;
   }
+  /* Logo 配色：亮色深灰文字 + 暗红圆球；暗色近白文字 + 亮红圆球
+     （去掉 dark:invert 反色——反色会让圆球变青蓝、丢失品牌红，且整体偏灰对比弱） */
   .logo-text-left,
   .logo-text-right {
+    fill: rgb(51, 51, 51);
     transition:
       transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-      filter 0.4s ease;
+      filter 0.4s ease,
+      fill 0.3s ease;
   }
   .logo-sphere {
+    fill: rgb(167, 90, 90);
     transition:
       transform 0.3s ease,
-      filter 0.3s ease;
+      filter 0.3s ease,
+      fill 0.3s ease;
     transform-origin: 342px 130px;
+  }
+  html[data-theme='dark'] .logo-text-left,
+  html[data-theme='dark'] .logo-text-right {
+    fill: rgb(235, 238, 242);
+  }
+  html[data-theme='dark'] .logo-sphere {
+    fill: rgb(224, 120, 120);
   }
   /* SVG 内 CSS transform 走 user 单位：viewBox 800 渲染到 112px 时
      1 user unit = 0.14 CSS px，故 36 单位 ≈ 5 CSS px（原 5 单位只渲染 0.7px，效果几乎不可见） */

@@ -1,0 +1,153 @@
+---
+// SearchModal.astro —— 全站搜索模态框（Pagefind UI）
+//
+// 挂在 Layout body 末尾（Swup 只替换 main，body 级常驻 → 单例）。
+// 点击导航栏搜索按钮（#search-btn）打开；Esc / 点遮罩关闭。
+// Pagefind UI 的 JS 懒加载：首次打开才动态注入 pagefind-ui.js，未点搜索零开销。
+// CSS（pagefind-ui.css）在 Layout head 全局引入，保证首次打开样式已就绪。
+---
+
+<div id="search-modal" class="search-modal" aria-hidden="true">
+  <div class="search-modal__backdrop" data-search-close></div>
+  <div class="search-modal__panel" role="dialog" aria-modal="true" aria-label="站内搜索">
+    <div id="search"></div>
+  </div>
+</div>
+
+<style is:global>
+  .search-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8vh 1rem 1rem;
+  }
+  .search-modal.is-open {
+    display: flex;
+  }
+  .search-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+  }
+  .search-modal__panel {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    max-height: 84vh;
+    overflow: auto;
+    background: rgb(var(--color-bg-primary));
+    border: 1px solid rgb(var(--color-border-primary));
+    border-radius: 16px;
+    box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.5);
+    animation: search-pop 0.2s ease;
+  }
+  @keyframes search-pop {
+    from {
+      opacity: 0;
+      transform: translateY(-12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  /* Pagefind UI 主题适配：覆盖官方 --pagefind-ui-* 变量，
+     跟随本站明暗 + 每页随机 accent（AccentColorInjector 注入） */
+  .search-modal__panel {
+    --pagefind-ui-primary: rgb(var(--color-accent));
+    --pagefind-ui-text: rgb(var(--color-text-primary));
+    --pagefind-ui-background: rgb(var(--color-bg-primary));
+    --pagefind-ui-border: rgb(var(--color-border-primary));
+    --pagefind-ui-tag: rgb(var(--color-bg-secondary));
+    --pagefind-ui-fade: rgb(var(--color-text-secondary));
+    --pagefind-ui-monospace: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  }
+  /* 去掉 Pagefind UI 自带外框与内边距，由面板接管 */
+  .search-modal__panel .pagefind-ui {
+    border: 0;
+    background: transparent;
+    padding: 1rem;
+  }
+  .search-modal__panel .pagefind-ui__search-input {
+    border-radius: 10px;
+  }
+  .search-modal__panel .pagefind-ui__result {
+    border-radius: 10px;
+  }
+  @media (max-width: 480px) {
+    .search-modal {
+      padding: 6vh 0.75rem 1rem;
+    }
+    .search-modal__panel .pagefind-ui {
+      padding: 0.75rem;
+    }
+  }
+</style>
+
+<script is:inline data-swup-ignore-script>
+  ;(function () {
+    var modal = document.getElementById('search-modal')
+    if (!modal) return
+    var btn = document.getElementById('search-btn')
+    var initialized = false
+
+    function open() {
+      modal.classList.add('is-open')
+      modal.setAttribute('aria-hidden', 'false')
+      document.body.style.overflow = 'hidden'
+      ensureInit()
+    }
+    function close() {
+      modal.classList.remove('is-open')
+      modal.setAttribute('aria-hidden', 'true')
+      document.body.style.overflow = ''
+    }
+    function ensureInit() {
+      if (initialized) {
+        focusInput()
+        return
+      }
+      initialized = true
+      // 懒加载 pagefind-ui.js（UMD，加载后 window.PagefindUI 可用）
+      var s = document.createElement('script')
+      s.src = '/pagefind/pagefind-ui.js'
+      s.onload = function () {
+        if (typeof PagefindUI === 'undefined') return
+        try {
+          new PagefindUI({
+            element: '#search',
+            showSubResults: true,
+            showImages: false,
+            autofocus: true,
+          })
+        } catch (e) {
+          /* 索引未生成或加载失败，静默降级 */
+        }
+        focusInput()
+      }
+      document.body.appendChild(s)
+    }
+    function focusInput() {
+      var input = modal.querySelector('.pagefind-ui__search-input')
+      if (input) {
+        setTimeout(function () {
+          input.focus()
+        }, 30)
+      }
+    }
+
+    // 搜索按钮在 header 内，Swup 只替换 main，按钮不会被替换 → 绑定一次即可
+    if (btn) btn.addEventListener('click', open)
+    modal.addEventListener('click', function (e) {
+      if (e.target.closest('[data-search-close]')) close()
+    })
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal.classList.contains('is-open')) close()
+    })
+  })()
+</script>

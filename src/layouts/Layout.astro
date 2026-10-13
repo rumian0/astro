@@ -10,6 +10,7 @@ import { BackToTopFAB } from '@/components/BackToTopFAB'
 import { ToastContainer } from '@/components/ToastContainer'
 import { ModalStack } from '@/components/ui/modal'
 import Analytics from '@vercel/analytics/astro'
+import SearchModal from '@/components/header/SearchModal.astro'
 import { site } from '@/config.json'
 import '@/styles/global.css'
 
@@ -46,6 +47,8 @@ const { title, description, image } = Astro.props
     <link rel="stylesheet" href="/fclite/fclite.css" />
     <!-- Fancybox 图片灯箱样式（本地化，避免 CDN 被跟踪防护拦截） -->
     <link rel="stylesheet" href="/fancybox/fancybox.min.css" />
+    <!-- Pagefind 搜索 UI 样式：head 全局加载，保证首次打开搜索模态框样式已就绪 -->
+    <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
   </head>
   <body>
     <!-- 全局壁纸背景：webp.mingcy.cn 随机壁纸 + 高斯模糊 + 明暗遮罩，避免影响文字。
@@ -1063,5 +1066,7 @@ const { title, description, image } = Astro.props
         else setTimeout(setup, 0)
       })()
     </script>
+    <!-- 全站搜索模态框（Pagefind UI，body 级常驻，Swup 不替换） -->
+    <SearchModal />
   </body>
 </html>
