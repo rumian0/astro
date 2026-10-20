@@ -77,6 +77,63 @@ astro-gyoza/
 
 ## 迁移记录
 
+### 2026-10-10 - 页底仓库地址更新 + 搜索框首包慢优化（preload hint + hover 预加载）
+
+**背景：** 两个诉求：①新博客主题已开源到 `rumian0/astro-mingcy`，页底「Designed by MingCY」的 GitHub 链接还指向旧仓库 `rumian0/astro`，让访客去新仓库拿同款模板；②每次打开搜索框都很慢，跟之前 CDN 版不一样。
+
+**搜索慢的根因：** `SearchModal.astro` 是「点搜索按钮才注入 `pagefind-ui.js`」的懒加载，首次点击要走完整链路：
+
+```
+click #search-btn
+  → modal.show()
+  → document.createElement('script') src=/pagefind/pagefind-ui.js   [163 KB]
+  → script.onload → new PagefindUI({...})
+      → fetch /pagefind/pagefind-entry.json                          [214 B]
+      → fetch /pagefind/wasm.unknown.pagefind                        [68 KB]
+      → fetch /pagefind/index/zh-cn_*.pf_index (按需)                 [~35 KB × N]
+  → 用户输入关键词
+      → fetch /pagefind/fragment/zh-cn_*.pf_fragment (按需)           [数十 KB]
+```
+
+`initialized=true` 是闭包变量，页面刷新一次才重置；Swup 切页也不重跑（`data-swup-ignore-script` 已加）→ 同一会话第二次打开应该秒开。用户反馈「每次都很慢」的大概率是：**每次浏览器刷新**（硬刷新、离开再回来）都是首次加载，163 KB script 冷启动 300–1000ms。「跟之前不一样」——之前是 CDN（jsDelivr）预热过的国内节点快，改本地后走自己服务器带宽。
+
+**修改文件：**
+
+- `src/components/footer/Footer.astro`（页底链接）
+- `src/data/projects.ts`（「博客」卡片 codeUrl）
+- `src/layouts/Layout.astro`（head 加 preload hint）
+- `src/components/header/SearchModal.astro`（hover 预加载 + loading 指示器）
+
+**改动内容：**
+
+1. **页底 + 项目卡仓库地址**：`https://github.com/rumian0/astro` → `https://github.com/rumian0/astro-mingcy`（Footer 页底 1 处 + projects.ts 「博客」卡片 1 处）。`projects.ts` 里 `rumian0/liaotian`（笔记项目）未动，那是独立仓库。
+
+2. **Layout head 加 preload hint**：在 `pagefind-ui.css` 后面插一行
+
+   ```html
+   <link rel="preload" href="/pagefind/pagefind-ui.js" as="script" fetchpriority="low" />
+   ```
+
+   浏览器在 head 解析时就开始低优先级下载 163 KB 的 `pagefind-ui.js`，`fetchpriority="low"` 不抢首屏带宽。SearchModal 后来注入 `<script src="...">` 时命中 HTTP 缓存，onload 立即触发 → 用户点搜索时 script 通常已就绪。
+
+3. **SearchModal 加 hover 预加载 + loading 指示器**：
+   - **hover 预加载**：`btn.addEventListener('mouseenter', preload)` 在鼠标悬停搜索按钮时就注入 `pagefind-ui.js` script，等 click 时脚本基本就绪。移动端无 hover，用 `matchMedia('(hover:hover) and (pointer:fine)')` 守卫，避免触屏设备挂无效监听
+   - **loading 指示器**：`open()` 里若 script 未就绪（`typeof PagefindUI === 'undefined'`）先 `showLoading()` 显示 spinner，script onload 后 `doInit()` → `hideLoading()`；用户看到「正在加载搜索…」而不是空白卡住，主观感受「快」很多
+   - **双状态变量**：`initialized`（PagefindUI 实例已建）+ `scriptLoading`（script 已注入但未 onload）区分两种状态，避免重复加载。preload 的 onload 里把 `scriptLoading=false` 但不 `doInit()`——保持懒加载语义（用户没点搜索就不 new PagefindUI）
+   - **错误降级**：script onload 后 `PagefindUI` 仍 undefined、或 onload 未触发 → `hideLoading()` + `showError()` 显示「搜索加载失败，请刷新重试」（原代码静默失败，用户看到空白面板不知为何）
+   - **spinner CSS**：16×16 圆环，`border:2px solid border-primary` + `border-top-color: accent` + `animation: search-spin 0.8s linear infinite`；`@media (prefers-reduced-motion: reduce)` 下降级为静态环（`animation:none` + `border-top-color: border-primary`）
+   - **HTML 结构**：`<div id="search"></div>` 后面加两个 `data-loading` / `data-loading-error` 的 hidden 层，PagefindUI 渲染真实 UI 到 `#search` 后这两层被隐藏（PagefindUI 会覆盖整个 `#search` 子树，`#search` 外的 loading 层不受影响）
+
+**验证：** `astro check` 114 files / 0 errors / 0 warnings / 0 hints；`astro build` 213 pages Complete（133s）。dist 核验：`dist/index.html` 含 `rel="preload"` + `fetchpriority="low"` + `pagefind-ui.js` 各 1 处；含 `search-modal__spinner` / `search-modal__loading` 各 1 处；含 `mouseenter.*preload` 监听 1 处；`dist/projects/index.html` 含 `github.com/rumian0/astro-mingcy` 1 处、`github.com/rumian0/liaotian` 1 处（独立仓库未动）；页底 `Designed by <a href="https://github.com/rumian0/astro-mingcy">MingCY</a>` 正确。
+
+**注意：**
+
+- ① preload hint 让**每个访问者**都会下载 163 KB 的 `pagefind-ui.js`（即使从不搜索）。`fetchpriority="low"` 保证不抢首屏，但对从不搜索的用户是纯浪费。要完全零浪费只能走「仅 hover 预加载」的方案 A，本次选了 A+B 双保险换取「几乎所有用户秒开」
+- ② hover 预加载只在 `mouseenter` 触发，**触屏设备不生效**（`matchMedia('(hover:hover) and (pointer:fine)')` 返回 false）。触屏用户的冷启动仍靠 preload hint 的后台预取，理论上也会秒开
+- ③ `data-loading` 层在 PagefindUI 初始化后由 `hideLoading()` 主动隐藏。若 script 加载成功但 `new PagefindUI` 抛错（如索引未生成），loading 仍会被隐藏、`#search` 保持空——此时用户看到空面板，属预期降级
+- ④ 索引规模当前不大（`index/*.pf_index` 共 208 KB、`fragment/*.pf_fragment` 共 384 KB、wasm 68 KB），首次搜索关键词时按需拉分片。若日后文章数暴涨（>300 篇），fragment 分片会变大，首次搜索仍可能慢——那时考虑改方案 D（`pagefind-modular-ui.js` 21 KB + 自建面板）
+- ⑤ 本次只优化了「首次打开慢」，**每次搜索关键词拉 fragment 分片**的延迟未处理（Pagefind 走 HTTP 缓存，同一关键词第二次秒出，不同关键词首次仍要下载该分片）。若用户反馈仍慢，下一步是加 `Fragment` 预热（打开 modal 时主动 fetch 几个热门 fragment）
+
 ### 2026-10-09 00:00 - 随机壁纸性能重构：纯色占位 + Service Worker 跨刷新 SWR 缓存
 
 **背景：** 用户反馈加随机图后网站速度非常慢。要求：①图片未加载完前用黑白纯色背景（即没加随机图之前的背景）；②图片彻底加载完毕后才显示壁纸；③缓存一张背景图，刷新时展示缓存的图（第二张）。

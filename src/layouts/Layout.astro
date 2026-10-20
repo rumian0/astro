@@ -49,6 +49,10 @@ const { title, description, image } = Astro.props
     <link rel="stylesheet" href="/fancybox/fancybox.min.css" />
     <!-- Pagefind 搜索 UI 样式：head 全局加载，保证首次打开搜索模态框样式已就绪 -->
     <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+    <!-- Pagefind UI JS：低优先级预取，SearchModal hover/点击注入 script 时命中缓存。
+         fetchpriority=low 不抢首屏带宽；163KB 首包从「点击后加载」变「页面加载后后台预取」，
+         用户点击搜索时 script 通常已就绪，首次打开从等待加载变成直接开。 -->
+    <link rel="preload" href="/pagefind/pagefind-ui.js" as="script" fetchpriority="low" />
   </head>
   <body>
     <!-- 全局壁纸背景：webp.mingcy.cn 随机壁纸 + 高斯模糊 + 明暗遮罩，避免影响文字。

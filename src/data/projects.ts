@@ -16,7 +16,7 @@ export const projects: Project[] = [
     image: 'image/blog.webp',
     tags: ['Hexo', 'JavaScript', 'CSS'],
     demoUrl: 'https://mingcy.cn',
-    codeUrl: 'https://github.com/rumian0/astro',
+    codeUrl: 'https://github.com/rumian0/astro-mingcy',
   },
   {
     id: 2,

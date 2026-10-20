@@ -11,6 +11,13 @@
   <div class="search-modal__backdrop" data-search-close></div>
   <div class="search-modal__panel" role="dialog" aria-modal="true" aria-label="站内搜索">
     <div id="search"></div>
+    <div class="search-modal__loading" data-loading hidden>
+      <span class="search-modal__spinner" aria-hidden="true"></span>
+      <span>正在加载搜索…</span>
+    </div>
+    <div class="search-modal__loading search-modal__loading--error" data-loading-error hidden>
+      <span>搜索加载失败，请刷新重试</span>
+    </div>
   </div>
 </div>
 
@@ -56,6 +63,42 @@
       transform: translateY(0) scale(1);
     }
   }
+  /* Pagefind UI JS 尚未加载时的加载指示器：script 就绪后由 PagefindUI 渲染真实 UI，
+     此层隐藏。spinner 与搜索面板同主题色，prefers-reduced-motion 下降级为静态。 */
+  .search-modal__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: rgb(var(--color-text-secondary));
+    font-size: 0.875rem;
+    text-align: center;
+  }
+  .search-modal__loading[hidden] {
+    display: none;
+  }
+  .search-modal__spinner {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    border: 2px solid rgb(var(--color-border-primary));
+    border-top-color: rgb(var(--color-accent));
+    border-radius: 50%;
+    animation: search-spin 0.8s linear infinite;
+  }
+  @keyframes search-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .search-modal__spinner {
+      animation: none;
+      border-top-color: rgb(var(--color-border-primary));
+    }
+  }
+
   /* Pagefind UI 主题适配：覆盖官方 --pagefind-ui-* 变量，
      跟随本站明暗 + 每页随机 accent（AccentColorInjector 注入） */
   .search-modal__panel {
@@ -94,43 +137,91 @@
     var modal = document.getElementById('search-modal')
     if (!modal) return
     var btn = document.getElementById('search-btn')
-    var initialized = false
+    var initialized = false // PagefindUI 实例已创建
+    var scriptLoading = false // pagefind-ui.js 已注入但 onload 未到
+    var hasHover = matchMedia('(hover:hover) and (pointer:fine)').matches
+
+    var loadingEl = modal.querySelector('[data-loading]')
+    var errorEl = modal.querySelector('[data-loading-error]')
 
     function open() {
       modal.classList.add('is-open')
       modal.setAttribute('aria-hidden', 'false')
       document.body.style.overflow = 'hidden'
-      ensureInit()
+      if (initialized) {
+        hideLoading()
+        focusInput()
+        return
+      }
+      // script 已在 preload/hover 阶段加载完：PagefindUI 已定义，立即 init
+      if (typeof PagefindUI !== 'undefined') {
+        doInit()
+        return
+      }
+      // script 未就绪：先显示 loading 指示，再确保 script 已开始加载
+      showLoading()
+      if (!scriptLoading) {
+        scriptLoading = true
+        var s = document.createElement('script')
+        s.src = '/pagefind/pagefind-ui.js'
+        s.onload = doInit
+        s.onerror = function () {
+          scriptLoading = false
+          hideLoading()
+          showError()
+        }
+        document.body.appendChild(s)
+      }
     }
     function close() {
       modal.classList.remove('is-open')
       modal.setAttribute('aria-hidden', 'true')
       document.body.style.overflow = ''
     }
-    function ensureInit() {
-      if (initialized) {
-        focusInput()
-        return
-      }
+    function doInit() {
+      if (initialized) return
       initialized = true
-      // 懒加载 pagefind-ui.js（UMD，加载后 window.PagefindUI 可用）
+      scriptLoading = false
+      hideLoading()
+      try {
+        new PagefindUI({
+          element: '#search',
+          showSubResults: true,
+          showImages: false,
+          autofocus: true,
+        })
+      } catch (e) {
+        /* 索引未生成或加载失败，静默降级 */
+      }
+      focusInput()
+    }
+    // hover 预加载：鼠标悬停搜索按钮就注入 script，click 时 script 通常已就绪
+    // 移动端无 hover，不加监听（preload hint 已覆盖冷启动场景）
+    function preload() {
+      if (typeof PagefindUI !== 'undefined' || scriptLoading) return
+      scriptLoading = true
       var s = document.createElement('script')
       s.src = '/pagefind/pagefind-ui.js'
       s.onload = function () {
-        if (typeof PagefindUI === 'undefined') return
-        try {
-          new PagefindUI({
-            element: '#search',
-            showSubResults: true,
-            showImages: false,
-            autofocus: true,
-          })
-        } catch (e) {
-          /* 索引未生成或加载失败，静默降级 */
-        }
-        focusInput()
+        scriptLoading = false
+        // 用户点搜索前不 new PagefindUI（保持懒加载语义），
+        // onload 后 scriptLoading=false，open 时走 typeof PagefindUI !== 'undefined' 分支
+      }
+      s.onerror = function () {
+        scriptLoading = false
+        showError()
       }
       document.body.appendChild(s)
+    }
+    function showLoading() {
+      if (loadingEl) loadingEl.removeAttribute('hidden')
+    }
+    function hideLoading() {
+      if (loadingEl) loadingEl.setAttribute('hidden', '')
+      if (errorEl) errorEl.setAttribute('hidden', '')
+    }
+    function showError() {
+      if (errorEl) errorEl.removeAttribute('hidden')
     }
     function focusInput() {
       var input = modal.querySelector('.pagefind-ui__search-input')
@@ -142,7 +233,10 @@
     }
 
     // 搜索按钮在 header 内，Swup 只替换 main，按钮不会被替换 → 绑定一次即可
-    if (btn) btn.addEventListener('click', open)
+    if (btn) {
+      btn.addEventListener('click', open)
+      if (hasHover) btn.addEventListener('mouseenter', preload)
+    }
     modal.addEventListener('click', function (e) {
       if (e.target.closest('[data-search-close]')) close()
     })
