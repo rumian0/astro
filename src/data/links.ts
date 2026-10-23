@@ -254,6 +254,12 @@ export const friendLinks: LinkCategory[] = [
         avatar: 'https://www.sanshijiu.cn/static/avatar/1/1787397803188bebb136a.jpg',
         desc: '无人扶我青云志，我自踏雪至山巅！',
       },
+      {
+        name: 'Wangxinyang ',
+        url: 'https://wangxinyang.top/',
+        avatar: 'https://wangxinyang.top/avatar.png',
+        desc: '个人博客 / 学习交流 / 生活日常',
+      },
     ],
   },
   {
@@ -329,6 +335,12 @@ export const friendLinks: LinkCategory[] = [
         url: 'https://www.80tz.cn/certificates/mingcy.cn',
         avatar: 'https://www.80tz.cn/assets/images/sites/logo/logo-small.svg',
         desc: '自由、共享给原创博客写作一个空间！',
+      },
+      {
+        name: '中文独立博客聚合列表',
+        url: 'https://blogroll.online/',
+        avatar: 'https://blogroll.online/wp-content/uploads/2026/07/android-chrome-512x512-1.png',
+        desc: '又一个博客聚合站',
       },
     ],
   },

@@ -947,19 +947,27 @@ const { title, description, image } = Astro.props
         // ---- Fancybox 初始化 ----
         function initFancybox() {
           if (typeof Fancybox === 'undefined') return
-          if (!document.querySelector('[data-fancybox]')) return
+          // 两种触发源：相册/实况的 <a data-fancybox>（Astro 模板字面量写，保留连字符）
+          // 与文章图的 <img class="article-image-fancybox">（rehype 只标 class，data-*
+          // 会被 Astro 驼峰化）。两者都没有就直接返回。
+          if (!document.querySelector('[data-fancybox], img.article-image-fancybox')) return
           try { Fancybox.unbind(document.body) } catch (e) {}
           // 给实况项注入空骨架 data-html（Fancybox 据此把骨架渲染进 slide 并触发
           // Carousel.contentReady；JS 设避免 SSR 属性转义问题）
           document.querySelectorAll('[data-fancybox][data-pvt]:not([data-html]), [data-fancybox][data-motion]:not([data-html]), [data-fancybox][data-video]:not([data-html])').forEach(function (el) {
             el.setAttribute('data-html', '<div class="lp-player"></div>')
           })
-          // 文章页普通图片：<img data-fancybox> 上无 href/data-src，Fancybox 取不到
-          // 大图源。运行时用 img 的最终 src（Astro 图片优化已改写成 /_astro/x.hash.webp）
-          // 补 data-src。currentSrc 优先（响应 srcset 选中的图），回退 src 属性。
-          // 选择器限定 img[data-fancybox]:not([data-src]) —— 相册实况项的 data-* 在 <a>
-          // 上、相册静态项 img 无 data-fancybox，均不会误伤。
-          document.querySelectorAll('img[data-fancybox]:not([data-src])').forEach(function (img) {
+          // 文章页普通图片：rehypeImage 只标 class（data-* 属性会被 Astro 的
+          // Content 组件驼峰化成 dataFancybox/dataCaption，Fancybox 的
+          // [data-fancybox] 选择器匹配不到 → 点击无反应）。这里运行时补齐
+          // data-fancybox / data-caption / data-src 三个属性，Fancybox 才能绑上。
+          // data-src 用 img.currentSrc（响应 srcset 选中的图）或 src 属性回退。
+          // :not([data-fancybox]) 保证 Swup 切页后重跑时不重复设置。
+          // 选择器限定 img.article-image-fancybox —— 相册项的 data-* 在 <a> 上、
+          // 相册静态项 img 无此 class，均不会误伤。
+          document.querySelectorAll('img.article-image-fancybox:not([data-fancybox])').forEach(function (img) {
+            img.setAttribute('data-fancybox', 'article')
+            if (img.alt) img.setAttribute('data-caption', img.alt)
             var src = img.currentSrc || img.getAttribute('src') || ''
             if (src) img.setAttribute('data-src', src)
           })

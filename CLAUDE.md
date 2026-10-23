@@ -2287,3 +2287,71 @@ document.querySelectorAll('img[data-fancybox]:not([data-src])').forEach(function
 - ② Fancybox 6 的 `data-fancybox` 放在 `<img>` 上时**必须配 `data-src` 或 `href`** 才能取源 —— 这是官方文档明确的，之前 rehype 只加 `data-fancybox` + `data-caption` 漏了取源属性，是这次 bug 的直接原因
 - ③ 本次只补 `data-src`，不重构 rehype 包 `<a>`，避免引入 Swup 图片链接导航坑（2026-09-17 教训）与相对路径 404 坑
 - ④ 首次访问慢 / EBUSY 构建报错与本次改动无关（图片优化固有成本 + 文件锁），清 dist 重跑即过
+
+### 2026-10-23 - 文章图片点击放大修复（第二轮，根治驼峰化）
+
+**背景：** 用户再次反馈文章图片点击不弹灯箱，并建议看 mingcy.cn。实测线上 `mingcy.cn/2026/02/19/eyes` 与本地 dist 产物**完全一样的 bug**：
+
+```html
+<img
+  src="/_astro/...webp"
+  alt="检测"
+  loading="lazy"
+  dataFancybox="article"
+  dataCaption="检测"
+  ...
+/>
+^^^^^^^^^^^ ^^^^^^^^^^^ 驼峰！Fancybox 的 [data-fancybox] 选择器匹配不到
+```
+
+**上一轮（2026-10-13）为什么没修好：** 那次把 `data-fancybox` 当 SSR 里已存在的属性（记录里写「SSR 态 `<img data-fancybox="article" data-caption="...">` 保留」），然后运行时用 `img[data-fancybox]` 选择器补 `data-src`。但实际上 **`data-fancybox` 在 SSR 里根本不存在，已被 Astro 的 Content 组件驼峰化成 `dataFancybox`**，所以 `querySelectorAll('img[data-fancybox]:not([data-src])')` 永远返回空集，整段运行时注入代码是空转的。
+
+**根因（Astro 序列化管线）：**
+
+```
+Markdown ![检测](xx.webp)
+  ↓ remark
+MDAST <image>
+  ↓ rehypeImage (src/plugins/rehypeImage.js)
+HAST <img properties={'data-fancybox': 'article'}>
+  ↓ @astrojs/markdown-remark → post.render() → Content 组件
+JSX 组件（HAST properties → JSX props，连字符驼峰化）
+  → HTML 输出 <img dataFancybox="article">  ← 断在这里
+```
+
+`hastscript` 的 `'data-fancybox'` 本身没问题（HAST 里存的是连字符），是 Astro 的 `Content` 组件把 HAST properties 当 JSX props 渲染时转了驼峰。这是 Astro 内容层渲染的固有行为，无法通过 rehype 插件规避。**但类名不受此影响**——`class` 在 HAST 里是 `className`，JSX 里也是 `className`，序列化回 HTML 是 `class`，全程不变。
+
+**最终方案：把 `data-*` 注入从构建期挪到运行时，用类名做标记。**
+
+**修改文件（2 个）：**
+
+- `src/plugins/rehypeImage.js`：删掉 `'data-fancybox': 'article'` 和 `'data-caption': alt`，改用 `className: 'article-image-fancybox'` 标记文章图（保留 `<figure>` 包裹 + `loading="lazy"`）
+- `src/layouts/Layout.astro`：`initFancybox()` 里——①早退检查从 `[data-fancybox]` 改为 `[data-fancybox], img.article-image-fancybox`（文章页 SSR 无 `data-fancybox` 属性但有类名标记，不能被早退截断）；②用 `img.article-image-fancybox:not([data-fancybox])` 选择器扫描文章图，运行时 `setAttribute` 补齐 `data-fancybox="article"` + `data-caption=alt` + `data-src=img.currentSrc`（替换原来永远匹配不到的 `img[data-fancybox]:not([data-src])`）
+
+**为什么选类名而非其他方案：**
+
+- **不用 `href` / 包 `<a>`**：Swup 会把 `<a href>` 当页面导航拦截（2026-09-17 教训），徒增 `data-no-swup` 复杂度
+- **不用 rehype 阶段写 `data-src`**：rehype 阶段 `img.src` 还是 markdown 原始路径（`./x.webp`），Astro 图片优化在更后阶段才改写成 `/_astro/x.hash.webp`，相对路径按文章 URL 解析会 404
+- **不在运行时改 Fancybox 选择器**：`bind('[data-fancybox], [dataFancybox]')` 是临时药，`data-caption` 也会被驼峰化成 `dataCaption`，Fancybox 读不到 caption
+- **类名**在 HAST → JSX → HTML 全程保留连字符/驼峰/原样不变，最安全
+
+**为什么不影响相册/实况：**
+
+- 相册页 `data-fancybox="gallery"` 写在 Astro 模板字面量（`[slug].astro` 的 `<a data-fancybox="gallery">`）里，**不走 rehype**，SSR 就是连字符，已验证 dist 里 125 处全部正确
+- 实况项的 `data-pvt` / `data-motion` / `data-video` 也在 `<a>` 上、Astro 模板字面量写，同样不受影响
+- 运行时选择器 `img.article-image-fancybox` 限定只命中文章图（类名只在 rehypeImage 里加），相册静态项 img 无此类名、实况项 data-* 在 `<a>` 上不在 img 上，均不会误伤
+
+**验证：** `astro check` 114 files / 0 errors / 0 warnings / 0 hints；`astro build` 213 pages Complete（103s）。dist 核验：
+
+- 真实 HTML 属性 `dataFancybox="` × **0**（彻底消失；grep 出的 212 处全是 Layout.astro 内联脚本里注释的说明文字，非属性）
+- 真实 HTML 属性 `dataCaption="` × **0**
+- 类名标记 `article-image-fancybox` × **1402**（覆盖所有文章图）
+- 运行时脚本 `setAttribute('data-fancybox'` × **212**（每个 HTML 页 1 次）
+- 相册页 `data-fancybox="gallery"` × **125**（不受影响，仍正常）
+
+**注意：**
+
+- ① SSR 产物里文章图无 `data-fancybox` 属性（靠运行时注入），**SEO 与无 JS 降级下图片不可点击**——与上一轮（2026-10-13）行为一致，Fancybox 本身就是 JS 组件，无 JS 时本就无法弹灯箱
+- ② 上一轮（2026-10-13）的运行时注入代码 `img[data-fancybox]:not([data-src])` 是死代码（选择器永远匹配 0 个），本次替换掉了，不是叠加
+- ③ 若日后 Astro 修了驼峰化 bug（HAST properties 不再转 JSX props），可以把运行时注入改回 rehype 阶段，但当前版本无法规避
+- ④ 相册页的 `data-fancybox="gallery"` 是 Astro 模板字面量写的、不走 rehype，所以一直是连字符、一直正常——这也是「为什么相册能用、文章不能用」的答案

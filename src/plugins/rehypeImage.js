@@ -18,13 +18,20 @@ export function rehypeImage() {
 
 function buildImage(node) {
   const imgProps = node.properties
-  const alt = imgProps.alt || ''
+
+  // class 标记文章图，运行时在 Layout.astro 的 initFancybox() 里补齐
+  // data-fancybox / data-caption / data-src 三个属性。
+  // 不用 data-* 是因为 Astro 的 Content 组件把 HAST properties 当 JSX props
+  // 渲染时会把连字符驼峰化（data-fancybox → dataFancybox），Fancybox 的
+  // [data-fancybox] 选择器匹配不到，点击就无反应。类名不受此影响。
+  const existing = imgProps.className || ''
+  const base = Array.isArray(existing) ? existing.join(' ') : String(existing).trim()
+  const cls = base ? base + ' article-image-fancybox' : 'article-image-fancybox'
 
   return h('img', {
     ...imgProps,
+    className: cls,
     loading: 'lazy',
-    'data-fancybox': 'article',
-    'data-caption': alt,
   })
 }
 
