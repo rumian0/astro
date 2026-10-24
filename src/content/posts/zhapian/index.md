@@ -1,6 +1,5 @@
 ---
-
-title: '诈骗素材合集
+title: '诈骗素材合集'
 date: 2026-10-24
 summary: '学校报到有很多人被诈骗，于是联想到了我自己就是有这方面的经验，于是想出一个教程来防止更多人被诈骗'
 cover: 'https://r2.mingcy.cn/%E5%88%9B%E6%84%8F%E6%90%9E%E6%80%AA-%E5%8F%AF%E7%88%B1_compressed.webp'
@@ -8,7 +7,6 @@ category: 生活方面
 tags: ['诈骗', '生活']
 draft: false
 comments: true
-
 ---
 
 # 茗叙
