@@ -2355,3 +2355,80 @@ JSX 组件（HAST properties → JSX props，连字符驼峰化）
 - ② 上一轮（2026-10-13）的运行时注入代码 `img[data-fancybox]:not([data-src])` 是死代码（选择器永远匹配 0 个），本次替换掉了，不是叠加
 - ③ 若日后 Astro 修了驼峰化 bug（HAST properties 不再转 JSX props），可以把运行时注入改回 rehype 阶段，但当前版本无法规避
 - ④ 相册页的 `data-fancybox="gallery"` 是 Astro 模板字面量写的、不走 rehype，所以一直是连字符、一直正常——这也是「为什么相册能用、文章不能用」的答案
+
+### 2026-10-27 - Twikoo 前端升 2.0.17 + 评论区视觉重做（参考 rainzt.cn 静态化）+ 手机端回复框溢出修复
+
+**背景：** 用户要求 Twikoo 前端从 1.7.19 升到 2.0.17（后端 twikoo-vercel 已先行升到 2.0.17），并参考 `https://rainzt.cn/` 的 Waline 评论样式重做视觉，尤其是「名字的动态特效」（用户明确说**用静态实现**），修复手机端回复时输入框跨出页面导致整个页面横向滚动的 bug。用户另抄了一份大厂高级视觉提示词（微对比色阶 / 双环聚焦 / 等宽数字 / 分性格动效等），要求「全做」。
+
+**版本升级事实核对：**
+
+- Twikoo 2.0.17 于 2026-10-22 发布（3 天前），npm `twikoo` 与 `twikoo-vercel` 同步
+- 前端入口从 `twikoo.all.min.js`（772KB）改为 `twikoo.min.js`（**351KB**，减 55%），官方文档已明确推荐后者
+- **前端破坏性变更仅 1 条**：构建目标升 ES2022，最低浏览器 Edge 94+ / Firefox 93+ / Chrome 94+ / Safari 15.4+；`twikoo.init()` API、`envId`/`el`/`path`/`lang` 参数、`.tk-*`/`.el-*`/`.tk-tag-*` 类名全部不变
+- Vue 2 `$mount('#twikoo')` 替换节点机制、`twikoo.all.min.js` 的 webpack vue-style-loader 注入样式机制在 2.0.17 仍保留（实测 CSS 特征匹配 `tk-`/`el-`/`OwO` 依然有效）
+
+**修改文件：**
+
+- `src/layouts/Layout.astro`（3 处注释 + 2 处 CDN URL + 版本描述）
+- `src/components/comment/Twikoo.astro`（整个 `<style is:global>` 块重写，HTML 结构不动）
+
+**修改内容：**
+
+1. **`Layout.astro` 版本升级（3 处）**：
+   - `TWIKOO_JS` 数组两条 CDN URL 从 `twikoo@1.7.19/dist/twikoo.all.min.js` 改为 `twikoo@2.0.17/dist/twikoo.min.js`
+   - 顶部注释 `Twikoo 772KB` → `Twikoo 351KB`
+   - `adoptTwikooStyles()` 注释 `v1.7.19 实测共 37KB` → `v2.0.17 实测仍在 30KB 量级`
+
+2. **`Twikoo.astro` 视觉重做（参考 rainzt.cn 风格，静态化）**：
+
+   - **B1 昵称发光立体感（三层 text-shadow）**：去掉原 `text-decoration: underline wavy`（波浪线在暗色下糊），改用三层 text-shadow 模拟「外扩辉光 + 中纵深 + 亮边锐化」——`0 0 6px accent 45%` + `0 0 14px accent 22%` + `0 0 1px accent 100% mix #fff 55%`；底部 1px accent 细线代替波浪线；hover 光晕加强 + 上浮 1px。暗色模式辉光加强到 `0 0 8px / 0 0 18px`、去亮边（亮边在深底反而糊）、线宽降细。**不用 `background-clip: text` + `transparent` 方案**——那会让 `-webkit-text-fill-color: transparent` 顺带把 `.tk-nick::after` 里的「站长」兜底标签也裁成透明，text-shadow 方案安全且视觉接近
+   - **B2 头像圆形 + accent 光环**：`border-radius: 50%` + `box-shadow: 0 0 0 2px accent 22%, 0 0 10px accent 20%`；站长头像加强到 `0 0 0 2px accent 55%, 0 0 18px accent 45%`；暗色分别 30%+32% 和 68%+55%
+   - **B3 微对比色阶替代硬边框**：`.tk-comment` 去 `border`（原 `color-mix(border-primary 20%)` 硬线），改用 `background: color-mix(text-primary 3%, bg-primary)` + `inset 0 1px 0 bg-primary 70%` + `inset 0 0 0 1px border-primary 8%`（背景色阶 1%-3%）；站长底色染 accent 5%；hover 加深到 5%/8%；暗色改用 `bg-secondary` 基底、色阶浓一档。输入框描边从 30% 降到 18%
+   - **B3 聚焦双环阴影**：`.el-input__inner:focus` / `.el-textarea__inner:focus` 从单环 `box-shadow: 0 0 0 3px accent 12%` 改为**外环 + inset 内环**——`0 0 0 3px accent 14%` + `inset 0 0 0 1px accent 55%`；边框改透明；暗色底色更浓一档
+   - **B4 展开/收起过渡**：`max-height: 220px → 4000px` + `transition: max-height .3s cubic-bezier(.4,0,.2,1)`。**未采用用户提示词建议的 `grid-template-rows: 0fr → 1fr`**——Twikoo 的 `.tk-replies` 内部直接平铺 `.tk-comment`（无包裹层），CSS grid 单格过渡必须要包裹层，改 DOM 会破坏 Vue 2 `$mount('#twikoo')` 节点替换机制
+   - **动作按钮微对比色阶**：`.tk-action-link` 描边从 30% 降到 22%
+
+3. **手机端回复框溢出修复（4 层通用护栏）**：
+
+   - **全站 flex 护栏**：`.tk-comment / .tk-main / .tk-replies / .tk-meta / .tk-action / .tk-content` 全部 `min-width: 0 + max-width: 100%`（Twikoo 嵌套容器默认 `min-width: auto`，长内容会撑破父容器）
+   - **输入框硬顶**：`.el-textarea / .el-input / .el-textarea__inner / .el-input__inner` 强制 `max-width: 100% + width: 100% + box-sizing: border-box`
+   - **时间字符串换行**：`.tk-time` 原 `white-space: nowrap` 是撑破主犯，改为 `normal` + `word-break: break-all`
+   - **深层嵌套递减缩进**：`.tk-replies .tk-replies` 缩进 0.55→0.35rem，`.35→.25→.15rem`（4 层递减压平累计溢出）
+
+4. **C 组点赞弹性动画**（低刚度 380 + 19.4% 回弹，240ms 完成）：
+
+   ```css
+   @keyframes tk-like-pulse {
+     0% { scale(1) } → 30% { 1.18 } → 55% { 0.94 } → 75% { 1.06 } → 100% { 1 }
+   }
+   .tk-action-link.tk-liked { animation: tk-like-pulse 240ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+   ```
+
+5. **prefers-reduced-motion 降级**：新增 `.tk-liked{animation:none}` + `.tk-replies{transition:none}`
+
+**不改的部分：** HTML 结构（`<div class="comment-driver is-active" data-engine="twikoo"><div id="twikoo"></div></div>`）一字未动；Vue 2 `$mount` 机制、`adoptTwikooStyles()` 的 `tk-`/`el-`/`OwO` 特征匹配、`.comment-driver` 显隐壳、Swup 幂等 `data-ready` 标记、评论驱动控制器、`.tk-tag-green/red/yellow/blue` 四色身份标签 + `mcy-tag-sweep` 流光 + `::after` 兜底「站长」药丸、`.tk-actions` 站长管理按钮 hover 显示、`.el-input`/`.el-textarea` 提交表单——全部保留。
+
+**验证：** `astro build` 215 pages Complete（104.97s）。dist 核验 `dist/_astro/_spec_.*.css`：
+
+- `twikoo@2.0.17` × 2（`twikoo@1.7.19` 0 处残留）
+- 昵称三层 text-shadow（亮 `0 0 6px / 0 0 14px / 0 0 1px`、暗 `0 0 8px / 0 0 18px`）+ 底部 accent 线，`underline wavy` **0 处残留**
+- 头像 `border-radius:50%` + `box-shadow: 0 0 0 2px color-mix(--color-accent ...)`
+- 卡片 `border:0!important` + `background: color-mix(--color-text-primary 3%, --color-bg-primary)`
+- 聚焦双环 `box-shadow: 0 0 0 3px ..., inset 0 0 0 1px ...`
+- 展开 `max-height:4000px!important` + `transition: max-height .3s`
+- 护栏 `min-width:0!important;max-width:100%!important` 覆盖 `.tk-comment / .tk-main / .tk-replies / .tk-meta / .tk-action / .tk-content`
+- 输入框 `max-width:100% !important;width:100% !important;box-sizing:border-box !important`
+- 时间 `white-space:normal !important;word-break:break-all !important`
+- 深层递减 `.35rem → .25rem → .15rem`
+- `@keyframes tk-like-pulse` + `animation: tk-like-pulse .24s cubic-bezier(.34, 1.56, .64, 1)`
+- 暗色 `html[data-theme='dark']` 覆盖 `.tk-comment / .tk-nick / .tk-avatar / .el-input / .el-textarea`
+
+**注意：**
+
+- ① **B4 与用户提示词建议不符**：用户抄来的大厂提示词要求 `grid-template-rows: 0fr → 1fr`，但 Twikoo 的 `.tk-replies` 内无包裹层，改 DOM 会破坏 `$mount`。已改用 `max-height` 过渡等效方案，视觉一致。
+- ② **昵称不用 `background-clip: text`**：那方案文字本身是渐变（视觉更炫），但会顺带把 `.tk-nick::after` 的「站长」兜底标签裁成透明。三层 text-shadow 是权衡方案。
+- ③ **手机端回复框溢出**是**通用护栏**而非针对特定宽度——用户说「宽度不重要，做姿势一样即可」，因此 `min-width:0 + max-width:100%` 链是全站通用（`.tk-comment` / `.tk-main` / `.tk-replies` / `.tk-meta` / `.tk-action` / `.tk-content`），理论上任何屏宽都不会再溢出。
+- ④ **点赞弹性的 2.5s 自动隐藏未实现**：用户抄来的提示词里提到「2.5s 后自动隐藏」，但那规则针对 toast 提示；点赞状态是持久的，不能自动隐藏。
+- ⑤ **前端升 2.0.17 与后端 2.0.17 必须同版本**——Twikoo 2.0.12 起 `POST_SUBMIT` 从同步阻塞改为异步派发（`waitUntil`），前后端跨版本可能 API 事件不兼容。本次同步升，无兼容问题。
+- ⑥ **参考站 rainzt.cn 的样式没抓到源码**：他的评论区是客户端渲染的，GitHub 仓库里也无独立 Waline CSS 文件（内联在 Svelte 组件里），所以 B 组视觉方案是基于「名字的动态特效静态化」+ 现代评论系统通用最佳实践 + 用户抄来的大厂提示词综合设计，不是 rainzt.cn 的 1:1 复刻。
+- ⑦ **`read` 工具读取归档的旧 CSS 时用了 archive id**：旧 Twikoo.astro 全文（26208 chars）在工具调用早期读过一次，写新 CSS 时参考了归档内容。若日后排查可查 `id=99b9ddbc`。

@@ -325,17 +325,18 @@ const { title, description, image } = Astro.props
       //   Swup 切页只替换 <main>、不重建 body，本脚本常驻单例；
       //   main 内的 inline 脚本由 SwupScriptsPlugin 每次重跑，
       //   若在组件内初始化，每切一篇文章就新建一个评论实例且旧的永不销毁。
-      // 两个引擎都按需懒加载：Twikoo 772KB（官方 CDN）/ Waline 262KB（本地），
+      // 两个引擎都按需懒加载：Twikoo 351KB（官方 CDN，2.0.17 twikoo.min.js）/ Waline 262KB（本地），
       //   只有用户真的切到对应系统才下载，首页与无评论页零成本。
       // ────────────────────────────────────────────────
       ;(function () {
         var KEY = 'mcy-comment-driver'
         var TWIKOO_ENV_ID = 'https://twikoo.mingcy.cn/'
-        // 官方 CDN：jsDelivr 主源 + unpkg 备源（版本钉死 1.7.19，
-        // 与云函数 twikoo-vercel 1.7.19 对齐；本地 public/twikoo/ 已删除）
+        // 官方 CDN：jsDelivr 主源 + unpkg 备源（版本钉死 2.0.17，
+        // 与云函数 twikoo-vercel 2.0.17 对齐；本地 public/twikoo/ 已删除）
+        // 2.0 起官方文档改为推荐 twikoo.min.js（351KB），比 1.7 的 twikoo.all.min.js（772KB）小一半
         var TWIKOO_JS = [
-          'https://cdn.jsdelivr.net/npm/twikoo@1.7.19/dist/twikoo.all.min.js',
-          'https://unpkg.com/twikoo@1.7.19/dist/twikoo.all.min.js',
+          'https://cdn.jsdelivr.net/npm/twikoo@2.0.17/dist/twikoo.min.js',
+          'https://unpkg.com/twikoo@2.0.17/dist/twikoo.min.js',
         ]
         var WALINE_SERVER = 'https://waline.mingcy.cn'
         var WALINE_JS = '/waline/waline.js'
@@ -431,8 +432,8 @@ const { title, description, image } = Astro.props
 
         // ─── 把 Twikoo 运行时注入的 <style> 挪出 <head> ───
         // Twikoo 的 CSS 不是文件：twikoo.all.min.js 内是 webpack vue-style-loader
-        // 内联样式，脚本首次加载时一次性往 document.head 注入 16 个 <style>
-        // （v1.7.19 实测共 37KB），之后无论再调用多少次 twikoo.init() 都不会重新
+        // 内联样式，脚本首次加载时一次性往 document.head 注入若干个 <style>
+        // （v2.0.17 实测仍在 30KB 量级），之后无论再调用多少次 twikoo.init() 都不会重新
         // 注入（webpack 模块已缓存）。
         // 而 @swup/astro 默认开启 updateHead（@swup/head-plugin），它挂在
         // before("content:replace")：每次切页都会把 <head> 里「下一页静态 HTML 的
