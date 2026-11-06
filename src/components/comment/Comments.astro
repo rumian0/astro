@@ -144,6 +144,14 @@ const SHOW_WALINE = true
   }
 
   /* 嵌套在其它卡片内（友链申请页）：去掉外壳，只留内容与切换器 */
+  /* 表情面板展开时把整个评论块提上层：
+     右下角的评论/回到顶部按钮是 fixed z-10，而 .comment-block 有 backdrop-filter
+     （自成层叠上下文、z-index 默认 auto）→ 面板的 z-index:1000 只在块内生效，
+     被 FAB 盖住。只在面板打开时提层，不影响平时 FAB 压在评论区上面。 */
+  .comment-block:has(.OwO-open) {
+    z-index: 30;
+  }
+
   .comment-block--bare {
     border: 0;
     border-radius: 0;

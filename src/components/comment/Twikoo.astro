@@ -1153,10 +1153,12 @@
       --tk-ctrl-h: 2rem;
       --tk-ctrl-px: 0.7rem;
     }
-    /* 表情面板在手机上收窄，左右留呼吸位（不能被推到屏幕边缘） */
+    /* 表情面板在手机上：向上展开（发布框底部就是屏幕底部，向下展开会被挤出屏） */
     [data-engine='twikoo'] .OwO-body {
       width: calc(100vw - 4rem) !important;
       max-width: 420px !important;
+      top: auto !important;
+      bottom: calc(100% + 0.5rem) !important;
     }
     [data-engine='twikoo'] .OwO-items-show {
       grid-template-columns: repeat(auto-fill, minmax(2.1rem, 1fr)) !important;
