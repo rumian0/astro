@@ -1,31 +1,29 @@
 ---
 // ============================================================================
-// HomeCover.astro —— 首页「随机文章头图背景」+ 左下角「推荐文章」胶囊
+// HomeCover.astro —— 首页「随机文章头图背景」+ 页面区域左下角「推荐文章」胶囊
 //
-// 需求映射：
-//   · 背景 = 从站内已有文章里随机取一篇的 cover（frontmatter 的 cover 字段）
-//   · 胶囊 = 同一个随机结果，点进去就是背景那张图的文章（二者永远一致）
-//   · 不引入图片库 / 不请求外部随机图站 / 不生成假链接
+// 定位：胶囊锚定在 div.swup-transition-fade（PageLayout 里的页面区域）左下角；
+//       该容器在首页加 .page-area--home → position: relative + 底部预留 4.5rem，
+//       胶囊用 absolute 落在预留带里，不会压到文章列表/分页/页脚。
+//       （不用 position: fixed：Swup 过渡期间祖先有 transform，fixed 会退化成
+//        relative 而跳位；absolute 在过渡里跟着页面一起淡出，反而更稳。）
 //
-// 关键设计（为什么这么做）：
-//   1) 候选列表在【构建期】生成（getCollection），随机发生在【客户端一次】，
-//      且写进 sessionStorage —— 同一次访问内背景与胶囊共用同一个 pick，
-//      返回首页也不会跳变；HTML 里不含随机值，所以不存在 SSR / hydration 不一致。
-//   2) 背景是通过 CSS 变量 --random-bg-url 交给 .site-wallpaper 的，
-//      与既有壁纸系统同一通道（同一张图只下载一次、同一 0.9s 淡入）。
-//   3) 排除 .png：站内有 5.1MB / 3.5MB 的 PNG 封面，直接拿来当背景会让首页
-//      多下载几 MB。webp/jpg/avif 实测 29KB–800KB，模糊背景完全够用。
-//   4) 头图加载失败 → 回退到站内既有的随机壁纸（webp.mingcy.cn），
-//      不会出现「首页一片纯色」的兜底窟窿。
-//   5) Layout.astro 的默认壁纸脚本在首页会让位（避免同时下载两张图）。
+// 轮换（本次重点）：
+//   localStorage['mcy-home-rotate-v1'] = { current, next }
+//   ① 首次访问：随机 A 作为当前，随机 B 作为下一张，提前把 B 的图片拉进浏览器缓存
+//   ② 刷新：直接取上次准备好的 next(B) 当当前，再准备 C
+//   ③ 排除重复：抽 next 时排除 current 与上一张（文章数 > 2 时绝不会连续重复）
+//   ④ Swup 返回首页：同一份文档里 window.__mcyHomePick 已存在 → 复用，不再轮换，
+//      避免「每次切页都换背景」
+//
+// 一致性：背景图与胶囊 href/title 永远来自同一个 item 对象，不做两次随机。
 // ============================================================================
 import { getCollection } from 'astro:content'
 import { getPostUrl } from '@/utils/content'
 
 const posts = await getCollection('posts', ({ data }) => data.draft !== true)
 
-// 排除 png（体积风险），其余按 cover 去重，保留最新那篇（posts 顺序即 sorted 前的原始顺序，
-// 这里只做去重，具体哪篇由前端随机决定）
+// 排除 png（站内有 5.1MB / 3.5MB 的 PNG 封面），其余按 cover 去重
 const isLightWeight = (url: string) => /\.(webp|jpe?g|avif|gif)(\?|#|$)/i.test(url)
 const seen = new Set<string>()
 const covers: { url: string; cover: string; title: string }[] = []
@@ -37,7 +35,7 @@ for (const post of posts) {
   covers.push({ url: getPostUrl(post), cover, title: post.data.title })
 }
 
-// 无 JS 时的链接兜底：第一条候选（真实存在），至少不会是死链
+// 无 JS 时的链接兜底：第一条候选（真实存在），不会是死链
 const firstUrl = covers[0]?.url ?? '/archives'
 ---
 
@@ -76,11 +74,12 @@ const firstUrl = covers[0]?.url ?? '/archives'
   ;(function () {
     var list = covers || []
     var docEl = document.documentElement
-    var KEY = 'mcy-home-cover-v1'
+    var KEY = 'mcy-home-rotate-v1'
     var FALLBACK = 'https://webp.mingcy.cn?v=' + Date.now()
+    var mem = window.__mcyHomePick
     var settled = false
 
-    // 背景写入：与 Layout 的壁纸脚本同一通道（CSS 变量 + html.bg-ready）
+    // ── 背景写入：与 Layout 的壁纸脚本同一通道（CSS 变量 + html.bg-ready）──
     function applyBg(url) {
       if (settled) return
       settled = true
@@ -88,92 +87,134 @@ const firstUrl = covers[0]?.url ?? '/archives'
       docEl.classList.add('bg-ready')
     }
 
-    // 预载 + 解码成功后才淡入，避免“先露底色再跳图”
-    function load(url, onOk) {
+    // ── 预载 + 解码成功后再淡入，避免「先露底色再跳图」──
+    function load(url, onDone) {
       var img = new Image()
       img.addEventListener('load', function () {
-        if (typeof img.decode === 'function') img.decode().then(onOk, onOk)
-        else onOk()
+        if (typeof img.decode === 'function') img.decode().then(onDone, onDone)
+        else onDone()
       })
       img.addEventListener('error', function () {
-        onOk(false)
+        onDone(false)
       })
       img.src = url
     }
 
-    function readPick() {
+    // ── 候选查找 / 随机（排除若干 cover）──
+    function find(cover) {
+      for (var i = 0; i < list.length; i++) if (list[i].cover === cover) return list[i]
+      return null
+    }
+    function pickRandom(exclude) {
+      if (!list.length) return null
+      var pool = []
+      for (var i = 0; i < list.length; i++) {
+        if (exclude && exclude.indexOf(list[i].cover) !== -1) continue
+        pool.push(list[i])
+      }
+      // 候选不足时回退成全集（宁可重复，也不能没有背景）
+      if (!pool.length) pool = list
+      return pool[Math.floor(Math.random() * pool.length)]
+    }
+
+    function readState() {
       try {
-        return JSON.parse(sessionStorage.getItem(KEY) || 'null')
+        var s = JSON.parse(localStorage.getItem(KEY) || 'null')
+        return s && s.v === 1 ? s : null
       } catch (e) {
         return null
       }
     }
-
-    function writePick(item) {
+    function writeState(s) {
       try {
-        sessionStorage.setItem(KEY, JSON.stringify(item))
+        localStorage.setItem(KEY, JSON.stringify({ v: 1, current: s.current, next: s.next }))
       } catch (e) {}
     }
 
-    function findCover(cover) {
-      for (var i = 0; i < list.length; i++) if (list[i].cover === cover) return list[i]
-      return null
+    // ── 决定「本次展示哪一篇」──
+    var cur = null
+    var nxt = null
+    var advanced = false
+
+    if (mem) {
+      // 同一份文档内（Swup 返回首页）：复用，不轮换、不重复预加载
+      cur = find(mem.cover) || mem
+    } else {
+      var state = readState()
+      // ① 优先使用上次准备好的 next
+      if (state && state.next) cur = find(state.next.cover)
+      // ② 没有/失效 → 随机，并排除上次那篇
+      if (!cur) {
+        var lastCover = state && state.current && state.current.cover
+        cur = pickRandom(lastCover ? [lastCover] : null)
+      }
+      // ③ 准备下一篇（排除当前与上次），并持久化
+      nxt = pickRandom(cur ? [cur.cover] : null)
+      if (cur) {
+        writeState({ current: cur, next: nxt })
+        advanced = true
+      }
+      window.__mcyHomePick = cur
     }
 
-    // 同一次访问固定同一个 pick；候选变化（重新构建）时自动重抽
-    var item = null
-    var saved = readPick()
-    if (saved && saved.cover) item = findCover(saved.cover)
-    if (!item && list.length) item = list[Math.floor(Math.random() * list.length)]
-
-    // 胶囊与背景始终指向同一篇
+    // ── 胶囊：与背景共用同一个 item ──
     var link = document.querySelector('[data-home-recommend-link]')
-    if (link && item) {
-      link.setAttribute('href', item.url)
-      link.setAttribute('title', '推荐文章：' + item.title)
-      link.setAttribute('aria-label', '推荐文章：' + item.title)
+    if (link && cur) {
+      link.setAttribute('href', cur.url)
+      link.setAttribute('title', '推荐文章：' + cur.title)
+      link.setAttribute('aria-label', '推荐文章：' + cur.title)
     }
-    if (item) writePick(item)
 
-    // 没有可用封面 → 直接用站内随机壁纸，保持既有观感
-    if (!item) {
+    // ── 没有可用封面 → 直接用站内随机壁纸 ──
+    if (!cur) {
       load(FALLBACK, function (ok) {
         if (ok !== false) applyBg(FALLBACK)
       })
       return
     }
 
-    // 先载头图；失败再回退站内随机壁纸
-    load(item.cover, function (ok) {
+    // ── 当前头图：缓存命中时会立刻 load 完成；失败再回退站内随机壁纸 ──
+    load(cur.cover, function (ok) {
       if (ok === false) {
         load(FALLBACK, function (ok2) {
           if (ok2 !== false) applyBg(FALLBACK)
         })
         return
       }
-      applyBg(item.cover)
+      applyBg(cur.cover)
     })
+
+    // ── 后台预热「下一次刷新」用的那张图（只 1 张，空闲时执行）──
+    if (advanced && nxt && nxt.cover !== cur.cover) {
+      var conn = navigator.connection
+      if (conn && conn.saveData) return // 省流模式不预取
+
+      var prefetch = function () {
+        var img = new Image()
+        img.decoding = 'async'
+        img.src = nxt.cover
+      }
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(prefetch, { timeout: 3000 })
+      } else {
+        setTimeout(prefetch, 1500)
+      }
+    }
   })()
 </script>
 
 <style>
   /* ─── 胶囊容器 ───
-     手机 / 平板：跟在 Hero 内容流末尾（grid 第二行），永不遮挡标题、永不出屏；
-     ≥1024px：绝对定位到 Hero 内容区左下角（第一屏左下角）。 */
+     锚定在 .swup-transition-fade.page-area--home（position: relative）的左下角。
+     该区域在首页底部预留了 4.5rem，所以胶囊落在空白带里，
+     不会压到文章卡片、分页器或页脚。 */
   .home-recommend {
+    position: absolute;
+    left: 1.25rem;
+    bottom: 1.15rem;
+    z-index: 20;
     display: flex;
     justify-content: flex-start;
-    margin-top: 2rem;
-    z-index: 20;
-  }
-
-  @media (min-width: 1024px) {
-    .home-recommend {
-      position: absolute;
-      left: 0;
-      bottom: 0.35rem;
-      margin-top: 0;
-    }
   }
 
   /* ─── 胶囊本体：微透明 + 背景模糊 + 顶部 1px 高光 ─── */
@@ -233,7 +274,6 @@ const firstUrl = covers[0]?.url ?? '/archives'
     opacity: 0.9;
   }
 
-  /* 箭头默认收敛，hover 时右移 2px */
   .home-recommend__arrow {
     width: 0.86rem;
     height: 0.86rem;
@@ -249,7 +289,6 @@ const firstUrl = covers[0]?.url ?? '/archives'
     opacity: 0.8;
   }
 
-  /* 暗色：底色改用 secondary 一档，避免在深蓝底上发灰 */
   :global(html[data-theme='dark']) .home-recommend__pill {
     border-color: rgb(var(--color-border-primary) / 0.75);
     background: rgb(var(--color-bg-secondary) / 0.42);
@@ -262,10 +301,11 @@ const firstUrl = covers[0]?.url ?? '/archives'
     background: rgb(var(--color-bg-secondary) / 0.62);
   }
 
-  /* 小屏：胶囊略瘦一点，但仍 ≥ 32px 高（可点） */
+  /* 小屏：贴边距收窄一档，但仍保持 ≥ 32px 点击高度 */
   @media (max-width: 640px) {
     .home-recommend {
-      margin-top: 1.6rem;
+      left: 0.9rem;
+      bottom: 0.9rem;
     }
 
     .home-recommend__pill {
@@ -282,7 +322,8 @@ const firstUrl = covers[0]?.url ?? '/archives'
       transition: none;
     }
 
-    .home-recommend__pill:hover {
+    .home-recommend__pill:hover,
+    .home-recommend__pill:active {
       transform: none;
     }
 

@@ -19,9 +19,27 @@ const { title, description, image, transparentBg = false } = Astro.props
 
   <Navbar />
   <main class={`relative z-1 pt-16 min-h-main ${transparentBg ? 'page-bg-home' : 'bg-primary/25'}`}>
-    <div class="swup-transition-fade">
+    <div class:list={['swup-transition-fade', { 'page-area--home': transparentBg }]}>
       <slot />
     </div>
   </main>
   <Footer />
 </Layout>
+
+<style>
+  /* ─── 首页页面区域（div.swup-transition-fade）───
+     给左下角「推荐文章」胶囊提供定位基准，并在页面底部预留一条空白带：
+     胶囊 absolute 落在这条带子里，不会压到文章卡片 / 分页器 / 页脚。
+     不用 position:fixed —— Swup 过渡期间本元素带 transform，fixed 会退化为
+     relative 而跳位；absolute 跟着页面一起淡入淡出，过渡更稳。 */
+  .page-area--home {
+    position: relative;
+    padding-bottom: 4.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .page-area--home {
+      padding-bottom: 4.25rem;
+    }
+  }
+</style>

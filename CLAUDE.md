@@ -2478,3 +2478,36 @@ JSX 组件（HAST properties → JSX props，连字符驼峰化）
 - ④ `public/` 进 `.prettierignore` 后，`pnpm lint` 不再碰第三方 bundle；但 `public/waline/waline.js`（436KB）等历史文件本来就被重排过，本次未回滚。
 - ⑤ 首页候选排除了 `.png`：若日后封面全是 png，胶囊背景会退回站内随机壁纸（`covers` 为空即走 fallback 分支）。
 - ⑥ 首页背景只在「首页」接管；`/page/2` 及之后仍用随机壁纸，Swup 切页时背景不会重置（与既有行为一致）。
+
+### 2026-11-07 - Twikoo 回复错位/表情尺寸专项 + 表情 JSON 重建 + 首页胶囊改锚页面区域左下角 + 背景轮换预加载
+
+**背景：** ①手机点「回复」后布局错位；②评论正文表情过大；③手机/电脑评论数不一致；④首页胶囊要放到 `div.swup-transition` 页面区域左下角，且背景不能每次刷新都是同一张。
+
+**关键源码事实（twikoo 2.0.17 bundle 逐字核对）：**
+
+1. **表情不是 JSON 直出**：点击插入 `:name:`，渲染器生成 `<img class="tk-owo-emotion" loading="lazy" src=… alt=…>`；官方 CSS `.tk-owo-emotion{width:3em;height:auto}` → 14.4px 字号下约 **43px 高**，这才是「表情过大」的真因，**与 twikoo.json 无关**。
+2. **表情不进灯箱**：lightbox click 处理里 `classList.contains('tk-owo-emotion') → return`，正常图片照旧可预览。
+3. **回复表单真实 DOM**：`.tk-submit > .tk-row(头像 + .tk-col(三项输入 + textarea)) + .tk-row.actions(表情/图片/md + 取消/预览/发送)`，官方 `.tk-row.actions{margin-left:3.5rem}`。
+4. **错位真因（两层叠合）**：①`tk-replies-expand` 只在本层 `replying` 时添加，而回复框挂在子评论内部 → 在楼中楼点回复时，父级 `.tk-replies` 仍是 `max-height:220px;overflow:hidden`，新输入框被裁；②上一轮把 `.tk-avatar{margin-right:0}`（评论卡改用 gap），但提交表单第一行依赖该 margin 拉开间距，且 `.tk-row.actions` 的 3.5rem 缩进与 gap 几何不匹配 → 头像贴输入框、按钮组右移。
+5. **计数不一致**：上一轮已收敛为单一 Twikoo（Waline 库实测 0 条）；剩余可能只有「某设备留了 `twikoo-access-token`（管理员可看 spam/待审）」/「分页排序是内存态」/「旧 HTML 或旧 localStorage」。
+
+**修改文件：** `src/components/comment/Twikoo.astro`、`public/js/twikoo.json`、`src/components/hero/HomeCover.astro`、`src/components/hero/Hero.astro`、`src/pages/[...page].astro`、`src/layouts/PageLayout.astro`
+
+**改动要点：**
+
+1. **表情**：`img.tk-owo-emotion` 收成行内（`max-width:1.6em` / `max-height:1.45em` / `vertical-align:-.26em`，不改 width 比例 → 宽幅 GIF 不变形）；普通图用 `img:not(.tk-owo-emotion)` 保留大图；OwO 面板缩略图 2em 方框；hover 预览浮层 6em。
+2. **回复表单**：`.tk-submit{width:100%;min-width:0}` + `.tk-submit>.tk-row{gap:.6rem}`（补回头像间距）+ `.tk-row.actions{margin:.7rem 0 0}`（去掉 3.5rem 硬缩进）+ `.tk-col/.tk-input/.tk-meta-input{min-width:0}`；卡内回复头像 1.85rem（大字框仍 2.5rem）。
+3. **裁切根治**：`.tk-replies:has(.tk-submit){max-height:none;overflow:visible}`；`≤767px` 直接全展开 + 隐藏死按钮 `.tk-expand`（不依赖 `:has`，UC 老内核也生效）。
+4. **字体放大**：`[data-engine='twikoo'] *{-webkit-text-size-adjust:100%;text-size-adjust:100%}`。
+5. **twikoo.json 重建**：修掉 `亲亲.gif"style=` 缺空格的畸形分类 key；分类图标 30px→20px；77 个图片表情补 `alt/loading/decoding`；**37 个字符表情逐字保留**；分类名/顺序/URL/条目数不变（4 类 17/16/44/37=114）。
+6. **胶囊定位**：首页 `.swup-transition-fade` 加 `.page-area--home`（`position:relative` + `padding-bottom:4.5rem`），胶囊 `absolute;left:1.25rem;bottom:1.15rem` 落在预留带 → 不压文章/分页/页脚；**不用 fixed**（Swup 过渡期祖先带 transform，fixed 会退化）。
+7. **轮换**：`localStorage['mcy-home-rotate-v1']={v,current,next}`；刷新→上次的 `next` 变当前，再抽下一篇（排除 current）；空闲时预取 1 张（`saveData` 不预取）；Swup 返回首页靠 `window.__mcyHomePick` 复用不轮换；背景与胶囊共用同一 item。
+
+**验证：** `astro check` 115 files 0/0/0；`astro build` 215 pages + pagefind 89 pages。dist 核验：表情行内/普通图 `:not`/面板 2em/`:has(.tk-submit)`/`≤767` 全展开/`actions` 归零/`text-size-adjust`/卡内头像 1.85rem 全部命中；首页 69 候选（0 png）+ `mcy-home-rotate-v1` + `requestIdleCallback` + `saveData` + `page-area--home`，旧 `mcy-home-cover-v1` 0 残留；`/page/2` 元素 class 只有 `swup-transition-fade`。**node:vm 抽出 dist 里真实脚本连跑 5 次「刷新」**：每次显示的都是上次预取的 next、背景与胶囊一致、next≠current、恰好 2 次图片请求（当前 1 + 预取 1）；模拟 Swup 返回首页只 1 次请求且不轮换。
+
+**注意：**
+
+- ① 服务端 `EMOTION_CDN` 无需改（`GET_CONFIG` 已是 `https://mingcy.cn/js/twikoo.json`）；EdgeOne 可能缓存旧 JSON，部署后建议刷该路径（表情尺寸已由 CSS 接管，旧 JSON 也不影响尺寸）。
+- ② **未实际测试 UC 浏览器**（本环境无真机/模拟器），仅做代码层兑底 + 提供手测清单，不编造结果。
+- ③ 胶囊现在在**页面区域底部预留带**里（非浮动）。若要「滚动时始终可见」需改 sticky/fixed，属另一种交互，待确认。
+- ④ 本轮未动数据库。

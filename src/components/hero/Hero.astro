@@ -20,7 +20,6 @@
 // ============================================================================
 import { hero, author, site } from '@/config.json'
 import { SocialList } from './SocialList'
-import HomeCover from './HomeCover.astro'
 
 // 终端提示符三段（参考站 SITE.heroTerminalPrompt）
 const PROMPT_PREFIX = '~'
@@ -121,9 +120,6 @@ const socials = hero.socials ?? []
         </div>
       </div>
     </div>
-
-    <!-- 左下角「推荐文章」胶囊（与随机背景头图同一篇，见 HomeCover.astro） -->
-    <HomeCover />
   </div>
 </section>
 
