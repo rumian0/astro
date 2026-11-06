@@ -2,3 +2,6 @@
 node_modules/
 dist/
 pnpm-lock.yaml
+# 第三方精简产物（twikoo / fancybox / waline / fclite / livephoto）：
+# prettier 会把压缩成一行的大文件重排成数千行（曾把 351KB 的 Twikoo 膨胀到 1.6MB）
+public/

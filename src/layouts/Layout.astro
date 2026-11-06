@@ -88,6 +88,10 @@ const { title, description, image } = Astro.props
       // 所有消费方统一读 background-image: var(--random-bg-url)。
       // Swup 切页不重建 body，此脚本只跑一次，SPA 导航期间壁纸保持稳定不闪变
       ;(function () {
+        // 首页背景由 HomeCover.astro 接管（随机文章头图 + 左下角「推荐文章」胶囊）：
+        // 这里直接让位，否则首页会同时下载「随机壁纸」和「文章头图」两张图。
+        // 其余页面（含 /page/2 之后的分页）继续走随机壁纸。
+        if (location.pathname === '/' || location.pathname === '/index.html') return
         var docEl = document.documentElement
         var settled = false
 
@@ -325,22 +329,38 @@ const { title, description, image } = Astro.props
       //   Swup 切页只替换 <main>、不重建 body，本脚本常驻单例；
       //   main 内的 inline 脚本由 SwupScriptsPlugin 每次重跑，
       //   若在组件内初始化，每切一篇文章就新建一个评论实例且旧的永不销毁。
-      // 两个引擎都按需懒加载：Twikoo 351KB（官方 CDN，2.0.17 twikoo.min.js）/ Waline 262KB（本地），
+      // 两个引擎都按需懒加载：Twikoo 351KB（同源自托管，2.0.17 twikoo.min.js）/ Waline 436KB（本地），
       //   只有用户真的切到对应系统才下载，首页与无评论页零成本。
       // ────────────────────────────────────────────────
       ;(function () {
         var KEY = 'mcy-comment-driver'
         var TWIKOO_ENV_ID = 'https://twikoo.mingcy.cn/'
-        // 官方 CDN：jsDelivr 主源 + unpkg 备源（版本钉死 2.0.17，
-        // 与云函数 twikoo-vercel 2.0.17 对齐；本地 public/twikoo/ 已删除）
-        // 2.0 起官方文档改为推荐 twikoo.min.js（351KB），比 1.7 的 twikoo.all.min.js（772KB）小一半
+        // 加载顺序：同源自托管优先 → jsDelivr → unpkg。
+        // 为什么不再把 CDN 放第一位：实测 cdn.jsdelivr.net 在国内网络/跟踪防护下
+        // 会直接 connection reset，unpkg 同样不稳定；两个源都失败的设备上 Twikoo
+        // 永远停在「加载失败」，表现就是「这台设备看不到评论」——跨设备不一致的
+        // 一大来源。同源文件与静态站同域，随 EdgeOne 一起分发，不依赖任何境外 CDN。
+        // 版本钉死 2.0.17，与云函数 twikoo-vercel 2.0.17 对齐（升级时三处一起改）。
         var TWIKOO_JS = [
+          // ?v= 版本号：public/ 下的文件没有内容 hash，升级时靠它绕开浏览器/边缘缓存
+          '/twikoo/twikoo.min.js?v=2.0.17',
           'https://cdn.jsdelivr.net/npm/twikoo@2.0.17/dist/twikoo.min.js',
           'https://unpkg.com/twikoo@2.0.17/dist/twikoo.min.js',
         ]
         var WALINE_SERVER = 'https://waline.mingcy.cn'
         var WALINE_JS = '/waline/waline.js'
         var WALINE_CSS = '/waline/waline.css'
+
+        // ── Waline 入口开关（当前：false）──
+        // Twikoo 与 Waline 是两套完全独立的数据库，互不互通。
+        // 实测本站 Waline 库为空（抽测 4 条路径均为 0 条），而 Twikoo 有真实评论。
+        // 而「上次选的是哪个系统」按设备存在 localStorage 里且永不过期 ——
+        // 只要某台设备曾点过一次 Waline 胶囊，它从此只能看到空列表，
+        // 它发的评论也不会出现在另一台设备上。这正是「跨设备评论不同步」的
+        // 结构性成因，与数据库、部署迁移无关。
+        // 关闭后：始终走 Twikoo（单一数据源）；Waline 组件与控制器代码全部保留，
+        // 把这里改成 true 并恢复 Comments.astro 的切换按钮即可一键重新启用。
+        var WALINE_ENABLED = false
 
         var twikooScript = null
         var twikooTryIndex = 0
@@ -354,6 +374,14 @@ const { title, description, image } = Astro.props
         }
 
         function readDriver() {
+          if (!WALINE_ENABLED) {
+            // 历史 localStorage 里可能留着 'waline'，直接忽略并纠正，
+            // 否则该设备会永久停在空评论区（本次修复的核心之一）
+            try {
+              if (localStorage.getItem(KEY) === 'waline') localStorage.setItem(KEY, 'twikoo')
+            } catch (e) {}
+            return 'twikoo'
+          }
           try {
             return localStorage.getItem(KEY) === 'waline' ? 'waline' : 'twikoo'
           } catch (e) {
@@ -615,6 +643,8 @@ const { title, description, image } = Astro.props
           var b = block()
           if (!b) return
           if (driver !== 'twikoo' && driver !== 'waline') return
+          // Waline 入口关闭时忽略任何切到 Waline 的请求（含旧 DOM / 旧脚本残留）
+          if (driver === 'waline' && !WALINE_ENABLED) return
           writeDriver(driver)
           syncUI(driver)
           if (driver === 'waline') initWaline()
@@ -652,6 +682,8 @@ const { title, description, image } = Astro.props
             var group = btn.closest('.driver-switch')
             if (!group) return
             var list = Array.prototype.slice.call(group.querySelectorAll('.driver-switch__btn'))
+            // 只剩一个引擎时没有可切换项（Waline 入口关闭后的单引擎形态）
+            if (list.length < 2) return
             var idx = list.indexOf(btn)
             var next =
               e.key === 'ArrowRight'

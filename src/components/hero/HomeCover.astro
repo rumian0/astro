@@ -1,0 +1,293 @@
+---
+// ============================================================================
+// HomeCover.astro —— 首页「随机文章头图背景」+ 左下角「推荐文章」胶囊
+//
+// 需求映射：
+//   · 背景 = 从站内已有文章里随机取一篇的 cover（frontmatter 的 cover 字段）
+//   · 胶囊 = 同一个随机结果，点进去就是背景那张图的文章（二者永远一致）
+//   · 不引入图片库 / 不请求外部随机图站 / 不生成假链接
+//
+// 关键设计（为什么这么做）：
+//   1) 候选列表在【构建期】生成（getCollection），随机发生在【客户端一次】，
+//      且写进 sessionStorage —— 同一次访问内背景与胶囊共用同一个 pick，
+//      返回首页也不会跳变；HTML 里不含随机值，所以不存在 SSR / hydration 不一致。
+//   2) 背景是通过 CSS 变量 --random-bg-url 交给 .site-wallpaper 的，
+//      与既有壁纸系统同一通道（同一张图只下载一次、同一 0.9s 淡入）。
+//   3) 排除 .png：站内有 5.1MB / 3.5MB 的 PNG 封面，直接拿来当背景会让首页
+//      多下载几 MB。webp/jpg/avif 实测 29KB–800KB，模糊背景完全够用。
+//   4) 头图加载失败 → 回退到站内既有的随机壁纸（webp.mingcy.cn），
+//      不会出现「首页一片纯色」的兜底窟窿。
+//   5) Layout.astro 的默认壁纸脚本在首页会让位（避免同时下载两张图）。
+// ============================================================================
+import { getCollection } from 'astro:content'
+import { getPostUrl } from '@/utils/content'
+
+const posts = await getCollection('posts', ({ data }) => data.draft !== true)
+
+// 排除 png（体积风险），其余按 cover 去重，保留最新那篇（posts 顺序即 sorted 前的原始顺序，
+// 这里只做去重，具体哪篇由前端随机决定）
+const isLightWeight = (url: string) => /\.(webp|jpe?g|avif|gif)(\?|#|$)/i.test(url)
+const seen = new Set<string>()
+const covers: { url: string; cover: string; title: string }[] = []
+
+for (const post of posts) {
+  const cover = post.data.cover
+  if (!cover || !isLightWeight(cover) || seen.has(cover)) continue
+  seen.add(cover)
+  covers.push({ url: getPostUrl(post), cover, title: post.data.title })
+}
+
+// 无 JS 时的链接兜底：第一条候选（真实存在），至少不会是死链
+const firstUrl = covers[0]?.url ?? '/archives'
+---
+
+<div class="home-recommend" data-home-recommend>
+  <a class="home-recommend__pill" href={firstUrl} data-home-recommend-link title="推荐文章">
+    <svg
+      class="home-recommend__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"></path>
+    </svg>
+    <span>推荐文章</span>
+    <svg
+      class="home-recommend__arrow"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 12h13"></path>
+      <path d="M13 6l6 6-6 6"></path>
+    </svg>
+  </a>
+</div>
+
+<script is:inline define:vars={{ covers }}>
+  ;(function () {
+    var list = covers || []
+    var docEl = document.documentElement
+    var KEY = 'mcy-home-cover-v1'
+    var FALLBACK = 'https://webp.mingcy.cn?v=' + Date.now()
+    var settled = false
+
+    // 背景写入：与 Layout 的壁纸脚本同一通道（CSS 变量 + html.bg-ready）
+    function applyBg(url) {
+      if (settled) return
+      settled = true
+      docEl.style.setProperty('--random-bg-url', "url('" + url + "')")
+      docEl.classList.add('bg-ready')
+    }
+
+    // 预载 + 解码成功后才淡入，避免“先露底色再跳图”
+    function load(url, onOk) {
+      var img = new Image()
+      img.addEventListener('load', function () {
+        if (typeof img.decode === 'function') img.decode().then(onOk, onOk)
+        else onOk()
+      })
+      img.addEventListener('error', function () {
+        onOk(false)
+      })
+      img.src = url
+    }
+
+    function readPick() {
+      try {
+        return JSON.parse(sessionStorage.getItem(KEY) || 'null')
+      } catch (e) {
+        return null
+      }
+    }
+
+    function writePick(item) {
+      try {
+        sessionStorage.setItem(KEY, JSON.stringify(item))
+      } catch (e) {}
+    }
+
+    function findCover(cover) {
+      for (var i = 0; i < list.length; i++) if (list[i].cover === cover) return list[i]
+      return null
+    }
+
+    // 同一次访问固定同一个 pick；候选变化（重新构建）时自动重抽
+    var item = null
+    var saved = readPick()
+    if (saved && saved.cover) item = findCover(saved.cover)
+    if (!item && list.length) item = list[Math.floor(Math.random() * list.length)]
+
+    // 胶囊与背景始终指向同一篇
+    var link = document.querySelector('[data-home-recommend-link]')
+    if (link && item) {
+      link.setAttribute('href', item.url)
+      link.setAttribute('title', '推荐文章：' + item.title)
+      link.setAttribute('aria-label', '推荐文章：' + item.title)
+    }
+    if (item) writePick(item)
+
+    // 没有可用封面 → 直接用站内随机壁纸，保持既有观感
+    if (!item) {
+      load(FALLBACK, function (ok) {
+        if (ok !== false) applyBg(FALLBACK)
+      })
+      return
+    }
+
+    // 先载头图；失败再回退站内随机壁纸
+    load(item.cover, function (ok) {
+      if (ok === false) {
+        load(FALLBACK, function (ok2) {
+          if (ok2 !== false) applyBg(FALLBACK)
+        })
+        return
+      }
+      applyBg(item.cover)
+    })
+  })()
+</script>
+
+<style>
+  /* ─── 胶囊容器 ───
+     手机 / 平板：跟在 Hero 内容流末尾（grid 第二行），永不遮挡标题、永不出屏；
+     ≥1024px：绝对定位到 Hero 内容区左下角（第一屏左下角）。 */
+  .home-recommend {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 2rem;
+    z-index: 20;
+  }
+
+  @media (min-width: 1024px) {
+    .home-recommend {
+      position: absolute;
+      left: 0;
+      bottom: 0.35rem;
+      margin-top: 0;
+    }
+  }
+
+  /* ─── 胶囊本体：微透明 + 背景模糊 + 顶部 1px 高光 ─── */
+  .home-recommend__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    height: 2.25rem;
+    padding: 0 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgb(var(--color-border-primary) / 0.5);
+    background: rgb(var(--color-bg-primary) / 0.42);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+    backdrop-filter: blur(10px) saturate(160%);
+    color: rgb(var(--color-text-primary) / 0.82);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.32),
+      0 10px 26px -20px rgb(var(--color-text-primary) / 0.7);
+    transition:
+      color 0.22s ease,
+      background-color 0.22s ease,
+      border-color 0.22s ease,
+      box-shadow 0.22s ease,
+      transform 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+
+  .home-recommend__pill:hover {
+    color: rgb(var(--color-accent));
+    background: rgb(var(--color-bg-primary) / 0.55);
+    border-color: rgb(var(--color-accent) / 0.38);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      0 12px 30px -20px rgb(var(--color-accent) / 0.55);
+    transform: translateY(-1px);
+  }
+
+  .home-recommend__pill:active {
+    transform: translateY(0) scale(0.985);
+  }
+
+  .home-recommend__pill:focus-visible {
+    outline: 2px solid rgb(var(--color-accent));
+    outline-offset: 2px;
+  }
+
+  .home-recommend__icon {
+    width: 0.92rem;
+    height: 0.92rem;
+    flex-shrink: 0;
+    color: rgb(var(--color-accent));
+    opacity: 0.9;
+  }
+
+  /* 箭头默认收敛，hover 时右移 2px */
+  .home-recommend__arrow {
+    width: 0.86rem;
+    height: 0.86rem;
+    flex-shrink: 0;
+    opacity: 0.45;
+    transition:
+      transform 0.22s ease,
+      opacity 0.22s ease;
+  }
+
+  .home-recommend__pill:hover .home-recommend__arrow {
+    transform: translateX(2px);
+    opacity: 0.8;
+  }
+
+  /* 暗色：底色改用 secondary 一档，避免在深蓝底上发灰 */
+  :global(html[data-theme='dark']) .home-recommend__pill {
+    border-color: rgb(var(--color-border-primary) / 0.75);
+    background: rgb(var(--color-bg-secondary) / 0.42);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      0 10px 26px -20px rgb(0 0 0 / 0.9);
+  }
+
+  :global(html[data-theme='dark']) .home-recommend__pill:hover {
+    background: rgb(var(--color-bg-secondary) / 0.62);
+  }
+
+  /* 小屏：胶囊略瘦一点，但仍 ≥ 32px 高（可点） */
+  @media (max-width: 640px) {
+    .home-recommend {
+      margin-top: 1.6rem;
+    }
+
+    .home-recommend__pill {
+      height: 2.1rem;
+      padding: 0 0.75rem;
+      font-size: 0.74rem;
+    }
+  }
+
+  /* 动效降级 */
+  @media (prefers-reduced-motion: reduce) {
+    .home-recommend__pill,
+    .home-recommend__arrow {
+      transition: none;
+    }
+
+    .home-recommend__pill:hover {
+      transform: none;
+    }
+
+    .home-recommend__pill:hover .home-recommend__arrow {
+      transform: none;
+    }
+  }
+</style>

@@ -2432,3 +2432,49 @@ JSX 组件（HAST properties → JSX props，连字符驼峰化）
 - ⑤ **前端升 2.0.17 与后端 2.0.17 必须同版本**——Twikoo 2.0.12 起 `POST_SUBMIT` 从同步阻塞改为异步派发（`waitUntil`），前后端跨版本可能 API 事件不兼容。本次同步升，无兼容问题。
 - ⑥ **参考站 rainzt.cn 的样式没抓到源码**：他的评论区是客户端渲染的，GitHub 仓库里也无独立 Waline CSS 文件（内联在 Svelte 组件里），所以 B 组视觉方案是基于「名字的动态特效静态化」+ 现代评论系统通用最佳实践 + 用户抄来的大厂提示词综合设计，不是 rainzt.cn 的 1:1 复刻。
 - ⑦ **`read` 工具读取归档的旧 CSS 时用了 archive id**：旧 Twikoo.astro 全文（26208 chars）在工具调用早期读过一次，写新 CSS 时参考了归档内容。若日后排查可查 `id=99b9ddbc`。
+
+### 2026-11-07 - Twikoo 跨设备评论不同步根治（单一数据源 + 自托管）+ 评论区 CSS 从未生效的真因（109 处非法变量）+ 首页随机头图与左下角推荐胶囊
+
+**背景：** 用户报告「手机发的评论电脑看不到、电脑发的手机看不到」，要求同时重做评论区 UI（手机端优先、明暗双主题、克制动效），并把首页原有随机壁纸换成「随机文章头图」，右下角（用户改口：左下角）加「推荐文章」胶囊。
+
+**排查结论（只读实测，未动数据库）：**
+
+1. **后端健康**：`twikoo.mingcy.cn` 仍在 Vercel（`Server: Vercel`），`GET_FUNC_VERSION → 2.0.17` 与前端同版本；`COMMENT_GET` 正常返回（`/2026/08/16/deepseek-harness` 3 条、`/2026/10/24/zhapian` 6 条、`/2026/09/10/xgy` 5 条）。**「EdgeOne 迁移导致数据库错乱」不成立。**
+2. **尾斜杠不分裂**：`twikoo-func 2.0.17` 的 `getUrlQuery(url)` 返回 `[url, toggleSlash(url)]`（源码 `@twikoojs/common` 的 `comment-dto.ts`），读写都走 `$in`，所以 `/x` 与 `/x/` 读到同一批。库里确实同时存在两种 `url` 字段值（`GET_RECENT_COMMENTS` 可见），但**不影响读取**。⚠️ 但 `getUrlQuery` 只切一次斜杠，`/x//` 会退化成只查 `/x/` —— 仅影响异常输入。
+3. **真因①：双评论系统天然隔离**。切换器把选择记在 `localStorage['mcy-comment-driver']`（永不过期），Twikoo 与 Waline 是两套独立库。实测 Waline 抽测 4 条路径**全部 0 条**，Twikoo 有真实数据 → 某台设备只要点过一次 Waline，它从此只看空列表、它发的评论也进不了 Twikoo。
+4. **真因②：Twikoo 脚本走境外 CDN**。原 `TWIKOO_JS = [jsDelivr, unpkg]`；本机实测 `cdn.jsdelivr.net` 直接 `Recv failure: Connection was reset`（unpkg 才 200）。两个都失败的设备上评论永远加载不出来。
+5. **真因③（UI，非审美）：`Twikoo.astro` 里 109 处颜色变量非法**。`--color-accent / --color-bg-primary / --color-text-primary …` 由 `AccentColorInjector` 注入为 **RGB 三元组**（`245 85 85`），必须写 `rgb(var(--color-accent))`。原文件 **109/109 处全是裸用法**（74 accent + 35 其它），`color:` / `background:` / `color-mix(...)` 全部被浏览器丢弃 → 昵称发光、标签渐变、按钮实心态、卡片色阶**从未生效**。
+6. **真因④：Twikoo 2.x 早已不用 Element UI**。`twikoo.min.js` 里 `el-button / el-input__inner / el-textarea__inner` 字符串计数 **0**；2.x 的类名是 `.tk-input__inner`、`.tk-textarea > .tk-input__inner`、`.tk-button` + `.tk-button--primary / .tk-send / .tk-preview / .tk-cancel`、`.tk-pagination-*`。原 CSS 的 `el-*` 选择器全部是死代码 → 输入框/发送键一直是官方默认外观。顺带发现 `/links/apply` 的「一键导入模板」也在 2.x 上失效（`querySelector('.el-textarea textarea')` 永远 null）。
+
+**修改文件：**
+
+- `public/twikoo/twikoo.min.js`（**新增**，2.0.17 官方包 359395 B，gzip 121116 B）
+- `.prettierignore`（加 `public/`）
+- `src/layouts/Layout.astro`（脚本源顺序 + Waline 开关 + 首页壁纸让位）
+- `src/components/comment/Comments.astro`（切换器 → 单引擎标识）
+- `src/components/comment/Twikoo.astro`（颜色令牌层 + 按钮/表单/分页/移动端重做）
+- `src/pages/links/apply.astro`（2.x textarea 选择器）
+- `src/components/hero/HomeCover.astro`（**新增**）
+- `src/components/hero/Hero.astro`（挂载 HomeCover）
+
+**改动内容：**
+
+1. **自托管 Twikoo**：`TWIKOO_JS = ['/twikoo/twikoo.min.js?v=2.0.17', jsDelivr, unpkg]`，同源优先、CDN 仅兜底；`?v=` 绕开无 hash 静态文件的缓存。`.prettierignore` 加 `public/`（历史上 prettier 把 351KB 的 bundle 重排成 1.6MB）。
+2. **单一数据源（B 方案）**：`Comments.astro` 加 `const SHOW_WALINE = false`，切换器改为**静态 `.driver-badge`**（非按钮、不进 Tab 序列）；`Layout.astro` 加 `WALINE_ENABLED = false`，`readDriver()` 忽略并把历史 `'waline'` 纠正为 `'twikoo'`，`switchTo('waline')` 直接 return，键盘左右切换在只剩 1 项时 return。Waline 组件与控制器代码全部保留，两处改成 `true` 即恢复双引擎。
+3. **颜色令牌层**：在 `[data-engine='twikoo']` 上定义 `--tk-accent / --tk-accent-soft / --tk-accent-line / --tk-bg / --tk-bg2 / --tk-fg / --tk-fg2 / --tk-border / --tk-ctrl-h / --tk-ctrl-px`，109 处裸变量全部替换为合法值（脚本化替换后核对：构建产物里 `var(--color-*)` 共 101 处、**非法 0 处**）。
+4. **操作按钮重设计**：默认改为「次要文字 + 微描边」而不是 accent 填充（不抢正文），hover 淡 accent 底、`:active` `scale(.96)`、`focus-visible` 外环、`.tk-liked` 实心 accent + 240ms 弹性、`.tk-disliked` 实心红、`[disabled]/is-loading` 45% 不透明；`min-height` 桌面 1.75rem / ≤640px 2rem。
+5. **表单与分页（2.x 真类名）**：`:is(.el-…, .tk-…)` 双代兼容；单行 2.25rem、多行 `min-height:7rem`、聚焦双环（外环 + inset）、暗色改 `bg-secondary` 基底；主按钮（`.tk-send/.tk-button--primary`）实心 accent + 禁用态；新增 `.tk-pagination-*` 圆形页码、`.tk-expand` 胶囊。
+6. **移动端**：`.tk-action` 行距、`.tk-comment` `0.8rem 0.75rem`、头像 2rem、`margin-left:3.5rem` 的提交行归零、**输入框 font-size 强制 16px（修 iOS 聚焦自动放大）**、控件高 2.6rem。
+7. **子回复卡片降一档**：`.tk-replies .tk-comment` 透明底 + 无外光，避免「卡片套卡片」在手机上发重。
+8. **首页随机头图 + 推荐胶囊**：`HomeCover.astro` 在构建期从 `getCollection('posts')` 取 `cover`，**排除 `.png`**（站内有 5.1MB/3.5MB PNG）并去重 → 69 条候选（8.8KB JSON）；客户端一次随机并写 `sessionStorage['mcy-home-cover-v1']`，背景（`--random-bg-url`）与胶囊 href/title 共用同一个 pick，**永远不会出现背景是 A、链接是 B**；头图失败 → 回退 `webp.mingcy.cn`；`Layout.astro` 的壁纸脚本在 `/` 上早退，避免首页下载两张图。胶囊 ≥1024px 绝对定位到 Hero 内容区**左下角**，窄屏回到内容流末尾（不遮挡、不出屏），hover 上浮 1px + 箭头右移，`prefers-reduced-motion` 全关。
+
+**验证：** `astro check` 115 files / 0 errors / 0 warnings / 0 hints；`astro build` **215 pages**（97.76s）+ `pagefind` 索引重建。dist 核验：`/twikoo/twikoo.min.js` 已随构建输出；首页 `twikoo.min.js?v=2.0.17`、`mcy-home-cover-v1`、`home-recommend__pill`、深色胶囊规则、69 条候选（无 png、cover 全唯一）均在；首页仅 HomeCover 一处会真发图请求，`/page/2` 与文章页仍走随机壁纸（文章页 `webp.mingcy.cn` 真请求仅 1 处）；文章页 `driver-badge` 存在、`data-driver="waline"` **0 处**；`_spec_.p_r8sp2r.css` 中 `--tk-accent` 83 处、非法颜色变量 **0**、`.tk-input__inner` / `.tk-button--primary` / 16px 移动端规则 / `.tk-pagination-pager` / `.tk-expand` 胶囊 / `.tk-replies-expand` 展开修正全部命中；`/links/apply` 产物含 `.tk-textarea textarea`。另用 `node:vm` 抽出 dist 里**真实的**首页脚本做四组行为测试：首次随机且背景与胶囊同源、同 session 复用同一 pick、头图失败回退 webp（2 次请求）、候选失效后重抽、全失败时保持纯色不抛错。
+
+**注意：**
+
+- ① **没有动数据库**：未删除、未清空、未重初始化，也未修改 Twikoo 服务端配置。
+- ② **仍需用户手动确认的两件事**：用手机发一条评论、电脑刷新验证（以及反向）；若仍不同步，请检查电脑浏览器是否登录过 Twikoo 管理（`localStorage['twikoo-access-token']` 会让管理员看到待审/spam 评论，未登录设备看不到）。
+- ③ 部署后建议先硬刷新一次（自托管脚本 URL 带 `?v=2.0.17`，理论上无需清缓存；EdgeOne 若对 `/twikoo/*` 有长缓存规则则需手动刷一次）。
+- ④ `public/` 进 `.prettierignore` 后，`pnpm lint` 不再碰第三方 bundle；但 `public/waline/waline.js`（436KB）等历史文件本来就被重排过，本次未回滚。
+- ⑤ 首页候选排除了 `.png`：若日后封面全是 png，胶囊背景会退回站内随机壁纸（`covers` 为空即走 fallback 分支）。
+- ⑥ 首页背景只在「首页」接管；`/page/2` 及之后仍用随机壁纸，Swup 切页时背景不会重置（与既有行为一致）。

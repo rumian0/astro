@@ -138,7 +138,8 @@ descr: 茶香四溢，编程世界</pre>
           '}'
 
         // 取当前激活评论引擎的输入框（双引擎都在 DOM 里，只有 .is-active 的那个可见）
-        // Twikoo → 注入的 ElementUI textarea；Waline → 模板自带的 #wl-edit textarea
+        // Twikoo → .tk-textarea 内的 textarea（2.x）/ .el-textarea textarea（1.7）
+        // Waline → 模板自带的 #wl-edit textarea
         function getTextarea() {
           var active = document.querySelector('#comment-block .comment-driver.is-active')
           if (!active) return null
@@ -146,7 +147,15 @@ descr: 茶香四溢，编程世界</pre>
           if (active.getAttribute('data-engine') === 'waline') {
             return active.querySelector('#wl-edit')
           }
-          return active.querySelector('.el-textarea textarea')
+          // ⚠️ Twikoo 2.x 已移除 Element UI：textarea 变成
+          // <div class="tk-input tk-textarea"><textarea class="tk-input__inner tk-textarea__inner">
+          // 旧的 .el-textarea 在 2.0.17 里不存在（死选择器 → 「一键导入模板」永远不启用）。
+          // 三个选择器按新→旧排列，同时兼容 2.x 与 1.7。
+          return (
+            active.querySelector('.tk-textarea textarea') ||
+            active.querySelector('.tk-textarea .tk-input__inner') ||
+            active.querySelector('.el-textarea textarea')
+          )
         }
 
         function tryEnableButton() {
