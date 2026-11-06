@@ -18,7 +18,7 @@ const { title = '评论', bare = false } = Astro.props
 // 表现就是「跨设备评论不同步」。关闭入口 = 全站单一数据源 Twikoo。
 // Waline.astro 组件与 Layout 里的驱动控制器代码全部保留，
 // 把这里改成 true（并同步 Layout.astro 的 WALINE_ENABLED = true）即可恢复双引擎。
-const SHOW_WALINE = false
+const SHOW_WALINE = true
 ---
 
 <section id="comment-block" class:list={['comment-block', { 'comment-block--bare': bare }]}>

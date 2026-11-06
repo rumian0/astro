@@ -11,6 +11,7 @@ import { ToastContainer } from '@/components/ToastContainer'
 import { ModalStack } from '@/components/ui/modal'
 import Analytics from '@vercel/analytics/astro'
 import SearchModal from '@/components/header/SearchModal.astro'
+import HomeCover from '@/components/hero/HomeCover.astro'
 import { site } from '@/config.json'
 import '@/styles/global.css'
 
@@ -125,6 +126,9 @@ const { title, description, image } = Astro.props
     </script>
 
     <slot />
+
+    <!-- 全局悬浮：首页「推荐文章」胶囊（fixed 视口左下角，Swup 容器之外，切页不重建） -->
+    <HomeCover />
 
     <BackToTopFAB client:only="react" />
     <ToastContainer client:only="react" />
@@ -360,7 +364,7 @@ const { title, description, image } = Astro.props
         // 结构性成因，与数据库、部署迁移无关。
         // 关闭后：始终走 Twikoo（单一数据源）；Waline 组件与控制器代码全部保留，
         // 把这里改成 true 并恢复 Comments.astro 的切换按钮即可一键重新启用。
-        var WALINE_ENABLED = false
+        var WALINE_ENABLED = true
 
         var twikooScript = null
         var twikooTryIndex = 0

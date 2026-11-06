@@ -1,5 +1,5 @@
 {
-  "<img src=\"https://cdn.jsdelivr.net/gh/2x-ercha/twikoo-magic@master/image/Strit_Bochi/to.png\" alt=\"Strit_Bochi\" style=\"width: 20px; height: 20px; object-fit: contain; position: relative; top: 2px;\" title=\"Strit_Bochi\" loading=\"lazy\" decoding=\"async\">": {
+  "Strit_Bochi": {
     "type": "image",
     "container": [
       {
@@ -72,7 +72,7 @@
       }
     ]
   },
-  "<img src=\"https://cdn.jsdelivr.net/gh/2x-ercha/twikoo-magic@master/image/罗小黑/你好呀.png\" alt=\"罗小黑\" style=\"width: 20px; height: 20px; object-fit: contain; position: relative; top: 2px;\" title=\"罗小黑\" loading=\"lazy\" decoding=\"async\">": {
+  "罗小黑": {
     "type": "image",
     "container": [
       {
@@ -141,7 +141,7 @@
       }
     ]
   },
-  "<img src=\"https://cdn.jsdelivr.net/gh/2x-ercha/twikoo-magic@master/image/bilibili_tv_gif/亲亲.gif\" alt=\"bilibili动态小电视\" style=\"width: 20px; height: 20px; object-fit: contain; position: relative; top: 2px;\" title=\"bilibili动态小电视\" loading=\"lazy\" decoding=\"async\">": {
+  "bilibili动态小电视": {
     "type": "image",
     "container": [
       {

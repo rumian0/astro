@@ -7,7 +7,6 @@ import { getSortedPosts } from '@/utils/content'
 import appConfig from '@/config.json'
 import type { CollectionEntry } from 'astro:content'
 import Hero from '@/components/hero/Hero.astro'
-import HomeCover from '@/components/hero/HomeCover.astro'
 import ProfileCard from '@/components/sidebar/ProfileCard.astro'
 import YiyanCard from '@/components/sidebar/YiyanCard.astro'
 import GreetingClock from '@/components/sidebar/GreetingClock'
@@ -48,15 +47,6 @@ const getPageUrl = (page: number) => {
 <PageLayout transparentBg={currentPage === 1}>
   <div>
     {currentPage === 1 && <Hero />}
-    {
-      currentPage === 1 && (
-        /* 随机文章头图 + 页面区域左下角「推荐文章」胶囊。
-           它是 .swup-transition-fade 的直接子级（该容器在首页带 .page-area--home，
-           即 position:relative + 底部预留 4.5rem），所以 absolute 定位落在
-           页面区域左下角，而不是 Hero 内部。 */
-        <HomeCover />
-      )
-    }
     {
       currentPage === 1 ? (
         <div class="home-grid max-w-[1200px] px-4 md:px-8 py-10 mx-auto">
