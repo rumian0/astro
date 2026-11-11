@@ -23,7 +23,7 @@ const shareList = [
     },
   },
   {
-    name: '复制链接',
+    name: '复制原文链接',
     icon: 'icon-link',
     onClick: (data: ShareData) => {
       navigator.clipboard.writeText(data.url)
@@ -46,12 +46,14 @@ function ShareButton() {
   const postTitle = useAtomValue(metaTitleAtom)
   const { present } = useModal()
 
-  const url = new URL(postSlug, site.url).href
+  const articleUrl = new URL(postSlug, site.url).href
+  const slug = postSlug.split('/').filter(Boolean).pop() ?? ''
+  const shareUrl = slug ? new URL(`/s/${slug}/`, site.url).href : articleUrl
   const text = `嘿，我发现了一片宝藏文章「${postTitle}」哩，快来看看吧！`
 
   const openModal = () => {
     present({
-      content: <ShareModal url={url} text={text} />,
+      content: <ShareModal articleUrl={articleUrl} shareUrl={shareUrl} text={text} />,
     })
   }
 
@@ -67,7 +69,20 @@ function ShareButton() {
   )
 }
 
-function ShareModal({ url, text }: { url: string; text: string }) {
+function ShareModal({
+  articleUrl,
+  shareUrl,
+  text,
+}: {
+  articleUrl: string
+  shareUrl: string
+  text: string
+}) {
+  const copyShareUrl = () => {
+    navigator.clipboard.writeText(shareUrl)
+    toast.success('已复制微信分享链接')
+  }
+
   return (
     <motion.div
       className="bg-primary rounded-lg p-2 min-w-[420px] border border-primary flex flex-col"
@@ -77,25 +92,51 @@ function ShareModal({ url, text }: { url: string; text: string }) {
     >
       <h2 className="px-3 py-1 font-bold">分享此内容</h2>
       <hr className="my-2 border-primary" />
-      <div className="px-3 py-2 grid grid-cols-[180px_auto] gap-3">
-        <QR.QRCodeSVG value={url} size={180} />
-        <div className="flex flex-col gap-2">
-          <div className="text-sm">分享到...</div>
-          <ul className="flex flex-col gap-2">
-            {shareList.map((item) => (
-              <li
-                className="px-2 py-1 flex gap-2 cursor-pointer rounded-md hover:bg-secondary"
-                key={item.name}
-                onClick={() => item.onClick({ url, text })}
-                role="button"
-                aria-label={`Share to ${item.name}`}
-              >
-                <i className={clsx('iconfont text-accent', item.icon)}></i>
-                <span>{item.name}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="px-3 py-2 flex gap-4">
+        <QR.QRCodeSVG className="shrink-0" value={shareUrl} size={160} />
+        <div className="flex flex-col gap-2 min-w-[200px]">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <i className="iconfont icon-wechat text-accent"></i>
+            <span>微信卡片</span>
+          </div>
+          <p className="text-xs text-secondary leading-relaxed">
+            在微信里打开这个链接再转发，就会显示标题、摘要和封面。
+          </p>
+          <button
+            type="button"
+            className="w-fit px-3 py-1.5 rounded-md border border-primary text-sm flex items-center gap-2 transition-colors hover:text-accent hover:border-accent"
+            onClick={copyShareUrl}
+          >
+            <i className="iconfont icon-link"></i>
+            <span>复制微信分享链接</span>
+          </button>
+          <a
+            className="w-fit text-xs text-secondary transition-colors hover:text-accent"
+            href={shareUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            预览分享卡片 ↗
+          </a>
         </div>
+      </div>
+      <hr className="my-2 border-primary" />
+      <div className="px-3 py-2">
+        <div className="text-sm mb-2">分享到...</div>
+        <ul className="flex flex-col gap-2">
+          {shareList.map((item) => (
+            <li
+              className="px-2 py-1 flex gap-2 cursor-pointer rounded-md hover:bg-secondary"
+              key={item.name}
+              onClick={() => item.onClick({ url: articleUrl, text })}
+              role="button"
+              aria-label={`Share to ${item.name}`}
+            >
+              <i className={clsx('iconfont text-accent', item.icon)}></i>
+              <span>{item.name}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </motion.div>
   )

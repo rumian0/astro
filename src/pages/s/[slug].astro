@@ -1,0 +1,178 @@
+---
+import type { CollectionEntry } from 'astro:content'
+import { getSortedPosts, getPostUrl } from '@/utils/content'
+import { getFormattedDateWithOptionalTime } from '@/utils/date'
+import { site } from '@/config.json'
+import aiSummaries from '@/data/ai-summaries.json'
+
+export async function getStaticPaths() {
+  const posts = await getSortedPosts()
+
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }))
+}
+
+interface Props {
+  post: CollectionEntry<'posts'>
+}
+
+const { post } = Astro.props as Props
+const { title, summary, category, date } = post.data
+
+const siteUrl = site.url.replace(/\/$/, '')
+const articlePath = getPostUrl(post)
+const articleUrl = `${siteUrl}${articlePath}`
+const shareUrl = `${siteUrl}/s/${post.slug}/`
+
+const aiSummary = (aiSummaries as Record<string, { summary?: string }>)[post.slug]?.summary
+const description = summary || aiSummary || site.description
+const image = `${siteUrl}/share-card.jpg`
+const dateText = getFormattedDateWithOptionalTime(date)
+---
+
+<!doctype html>
+<html lang={site.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="canonical" href={articleUrl} />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1080" />
+    <meta property="og:image:height" content="1080" />
+    <meta property="og:url" content={shareUrl} />
+
+    <meta itemprop="name" content={title} />
+    <meta itemprop="description" content={description} />
+    <meta itemprop="image" content={image} />
+
+    <style is:inline>
+      :root {
+        color-scheme: light dark;
+        --share-bg: #f2f5ec;
+        --share-card: #ffffff;
+        --share-text: #33373a;
+        --share-muted: #6b7280;
+        --share-border: #e3e7d9;
+        --share-accent: #f55555;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --share-bg: #10131a;
+          --share-card: #1a2131;
+          --share-text: #f6f7f8;
+          --share-muted: #98a2b3;
+          --share-border: #2a3344;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        background: var(--share-bg);
+        color: var(--share-text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+          'Microsoft YaHei', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .share-card {
+        width: 100%;
+        max-width: 560px;
+        background: var(--share-card);
+        border: 1px solid var(--share-border);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px -24px rgb(0 0 0 / 0.35);
+      }
+      .share-card__cover {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        background: var(--share-bg);
+      }
+      .share-card__body {
+        padding: 20px 22px 24px;
+      }
+      .share-card__source {
+        margin: 0 0 8px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: var(--share-accent);
+      }
+      .share-card__title {
+        margin: 0 0 10px;
+        font-size: 22px;
+        line-height: 1.4;
+        font-weight: 700;
+      }
+      .share-card__desc {
+        margin: 0 0 12px;
+        font-size: 14px;
+        line-height: 1.75;
+        color: var(--share-muted);
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .share-card__meta {
+        margin: 0 0 18px;
+        font-size: 12px;
+        color: var(--share-muted);
+      }
+      .share-card__btn {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 999px;
+        background: var(--share-accent);
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .share-card__hint {
+        margin: 16px 0 0;
+        font-size: 12px;
+        line-height: 1.7;
+        color: var(--share-muted);
+      }
+    </style>
+  </head>
+  <body data-pagefind-ignore>
+    <main class="share-card">
+      <img class="share-card__cover" src={image} alt={title} />
+      <div class="share-card__body">
+        <p class="share-card__source">{site.title} · 文章分享</p>
+        <h1 class="share-card__title">{title}</h1>
+        <p class="share-card__desc">{description}</p>
+        <p class="share-card__meta">{dateText}{category && ` · ${category}`}</p>
+        <a class="share-card__btn" href={articlePath}>阅读原文 →</a>
+        <p class="share-card__hint">
+          在微信里点击右上角「···」，选择「发送给朋友」，就能分享这个带封面的卡片。
+        </p>
+      </div>
+    </main>
+  </body>
+</html>
