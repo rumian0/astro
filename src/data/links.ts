@@ -331,10 +331,10 @@ export const friendLinks: LinkCategory[] = [
         desc: '个人博客俱乐部',
       },
       {
-        name: '八零圈',
-        url: 'https://www.80tz.cn/certificates/mingcy.cn',
-        avatar: 'https://www.80tz.cn/assets/images/sites/logo/logo-small.svg',
-        desc: '自由、共享给原创博客写作一个空间！',
+        name: '博客雷达',
+        url: 'https://rss.nooj.cn/',
+        avatar: 'https://rss.nooj.cn/logo/836',
+        desc: '中文独立博客的 RSS 信息聚合站',
       },
       {
         name: '中文独立博客聚合列表',

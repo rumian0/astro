@@ -93,6 +93,11 @@ const { title, description, image } = Astro.props
         // 这里直接让位，否则首页会同时下载「随机壁纸」和「文章头图」两张图。
         // 其余页面（含 /page/2 之后的分页）继续走随机壁纸。
         if (location.pathname === '/' || location.pathname === '/index.html') return
+
+        // 省流模式不拉大图，保持纯色
+        var conn = navigator.connection
+        if (conn && conn.saveData) return
+
         var docEl = document.documentElement
         var settled = false
 
@@ -104,24 +109,42 @@ const { title, description, image } = Astro.props
           docEl.classList.add('bg-ready')
         }
 
-        var url = 'https://webp.mingcy.cn?v=' + Date.now()
-        var img = new Image()
-        img.addEventListener('load', function () {
-          // decode() 保证帧已解码，写入变量时不闪；不支持/失败时直接 apply（CSS 渲染仍可用）
-          if (typeof img.decode === 'function') {
-            img.decode().then(function () {
+        function start() {
+          var url = 'https://webp.mingcy.cn?v=' + Date.now()
+          var img = new Image()
+          img.addEventListener('load', function () {
+            // decode() 保证帧已解码，写入变量时不闪；不支持/失败时直接 apply（CSS 渲染仍可用）
+            if (typeof img.decode === 'function') {
+              img.decode().then(function () {
+                apply(url)
+              }, function () {
+                apply(url)
+              })
+            } else {
               apply(url)
-            }, function () {
-              apply(url)
-            })
+            }
+          })
+          img.addEventListener('error', function () {
+            // 静默：保持纯色占位，不强制显示兜底图（用户要的就是「没加载完纯色」）
+          })
+          img.src = url
+        }
+
+        // 延后到「所有内容加载完毕」之后再拉背景大图（1–2MB），避免和正文/字体/脚本抢带宽。
+        // 加载前页面就是 :root 的 --random-bg-url: none + 纯色底，用户看到的即默认背景。
+        function schedule() {
+          if ('requestIdleCallback' in window) {
+            requestIdleCallback(start, { timeout: 1500 })
           } else {
-            apply(url)
+            setTimeout(start, 200)
           }
-        })
-        img.addEventListener('error', function () {
-          // 静默：保持纯色占位，不强制显示兜底图（用户要的就是「没加载完纯色」）
-        })
-        img.src = url
+        }
+
+        if (document.readyState === 'complete') {
+          schedule()
+        } else {
+          window.addEventListener('load', schedule, { once: true })
+        }
       })()
     </script>
 

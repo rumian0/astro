@@ -72,6 +72,7 @@
     var list = null
     var listPromise = null
     var settled = false
+    var bootPending = false
 
     function isHome() {
       return location.pathname === '/' || location.pathname === '/index.html'
@@ -159,6 +160,12 @@
       link.setAttribute('aria-label', '推荐文章：' + item.title)
     }
 
+    // 空闲时执行（requestIdleCallback 不支持时退回短延时）
+    function whenIdle(fn) {
+      if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 1500 })
+      else setTimeout(fn, 200)
+    }
+
     function prefetchNext(nxt) {
       var conn = navigator.connection
       if (conn && conn.saveData) return
@@ -173,6 +180,29 @@
 
     function bootHome() {
       showPill()
+      // 背景图已应用过（同一文档内重复调用）：不再重新抽签，避免胶囊文字与背景对不上
+      if (settled) return
+      // 省流模式不拉大图，保持纯色
+      var conn = navigator.connection
+      if (conn && conn.saveData) return
+      // 延后到「所有内容加载完毕」之后再拉文章头图（大图），先让正文/字体/脚本跑完。
+      // 加载前页面是 :root 的 --random-bg-url: none + 纯色底，即默认背景。
+      if (document.readyState === 'complete') {
+        whenIdle(bootHomeNow)
+      } else if (!bootPending) {
+        bootPending = true
+        window.addEventListener(
+          'load',
+          function () {
+            bootPending = false
+            whenIdle(bootHomeNow)
+          },
+          { once: true },
+        )
+      }
+    }
+
+    function bootHomeNow() {
       fetchList().then(function () {
         if (!isHome()) return // 等待期间已经离开首页
         if (!list.length) {
