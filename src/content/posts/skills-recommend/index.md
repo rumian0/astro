@@ -1,4 +1,4 @@
-```
+---
 title: '总结了一些设计类的skills'
 date: 2026-11-12
 summary: '在做网页或者PPt的时候AI总是不聪明，看到大佬做出来的效果总是很好看，或许就是因为skills没有用对'
@@ -7,7 +7,7 @@ category: '技术教程'
 tags: [skills,AI]
 draft: false
 comments: true
-```
+---
 
 # 茗述
 
