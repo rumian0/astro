@@ -19,7 +19,7 @@
 //   （sm:text-[3.75rem] lg:text-[4.5rem]，与参考站 text-6xl/text-7xl 等值）。
 // ============================================================================
 import { hero, author, site } from '@/config.json'
-import { SocialList } from './SocialList'
+import SocialList from './SocialList.astro'
 
 // 终端提示符三段（参考站 SITE.heroTerminalPrompt）
 const PROMPT_PREFIX = '~'
@@ -97,7 +97,7 @@ const socials = hero.socials ?? []
         {
           socials.length > 0 && (
             <div class="border-primary/40 sm:border-l sm:pl-4">
-              <SocialList client:load />
+              <SocialList />
             </div>
           )
         }

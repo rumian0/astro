@@ -1,0 +1,63 @@
+---
+// ============================================================================
+// SocialList.astro —— Hero 社交图标列表（纯 CSS stagger 入场动画）
+//
+// 原为 React + framer-motion（motion.ul staggerChildren 0.1 + y:40→0 淡入上浮），
+// 为消除首屏 React 水合（Lighthouse bootup-time 项）改为纯 CSS：
+//   每个图标按 index 递增 0.1s 的 animation-delay，动画参数与原来一致
+//   （opacity 0→1 + translateY 40px→0，0.5s ease-out， forwards 保持终态）。
+//   prefers-reduced-motion 时直接显示终态，不播动画。
+// ============================================================================
+import clsx from 'clsx'
+import { hero } from '@/config.json'
+
+const socials = hero.socials ?? []
+const { className } = Astro.props
+---
+
+<ul
+  class:list={[
+    'social-list flex gap-4 flex-wrap items-center justify-center lg:justify-start',
+    className,
+  ]}>
+  {
+    socials.map((social, i) => (
+      <li class="social-list__item" style={`animation-delay: ${i * 0.1}s`}>
+        <a
+          class="relative size-9 text-white text-xl flex justify-center items-center group"
+          href={social.url}
+          title={social.name}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span
+            class="absolute inset-0 -z-1 rounded-full group-hover:scale-105 transition"
+            style={`background-color: ${social.color}`}
+          />
+          <i class={clsx('iconfont', social.icon)} />
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .social-list__item {
+    opacity: 0;
+    transform: translateY(40px);
+    animation: social-item-in 0.5s ease-out forwards;
+  }
+  @keyframes social-item-in {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .social-list__item {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+  }
+</style>

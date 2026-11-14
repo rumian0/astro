@@ -44,12 +44,35 @@ const { title, description, image } = Astro.props
       defer
       src="https://cloud.umami.is/script.js"
       data-website-id="86be4560-edbf-468b-9897-813f94dfe6c3"></script>
-    <!-- 朋友圈插件样式：放在 head 全局加载（Swup 切页不替换 head），避免 main 内 link 在切页后未加载导致卡片样式丢失 -->
-    <link rel="stylesheet" href="/fclite/fclite.css" />
-    <!-- Fancybox 图片灯箱样式（本地化，避免 CDN 被跟踪防护拦截） -->
-    <link rel="stylesheet" href="/fancybox/fancybox.min.css" />
-    <!-- Pagefind 搜索 UI 样式：head 全局加载，保证首次打开搜索模态框样式已就绪 -->
-    <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+    <!-- 朋友圈插件样式：head 全局异步加载（Swup 切页不替换 head）。
+         media=print 技巧：浏览器照常下载但不阻塞首屏渲染，onload 后切回 all 生效。
+         仍在 head 内立即开始下载，Swup 切到 /links/fcircle 时样式几乎总是已就绪。 -->
+    <link
+      rel="stylesheet"
+      href="/fclite/fclite.css"
+      media="print"
+      onload="this.setAttribute('media', 'all')" />
+    <noscript>
+      <link rel="stylesheet" href="/fclite/fclite.css" />
+    </noscript>
+    <!-- Fancybox 图片灯箱样式（本地化，避免 CDN 被跟踪防护拦截）：异步，不阻塞首屏 -->
+    <link
+      rel="stylesheet"
+      href="/fancybox/fancybox.min.css"
+      media="print"
+      onload="this.setAttribute('media', 'all')" />
+    <noscript>
+      <link rel="stylesheet" href="/fancybox/fancybox.min.css" />
+    </noscript>
+    <!-- Pagefind 搜索 UI 样式：异步加载，打开搜索模态框前早已下载完毕 -->
+    <link
+      rel="stylesheet"
+      href="/pagefind/pagefind-ui.css"
+      media="print"
+      onload="this.setAttribute('media', 'all')" />
+    <noscript>
+      <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+    </noscript>
     <!-- Pagefind UI JS：低优先级预取，SearchModal hover/点击注入 script 时命中缓存。
          fetchpriority=low 不抢首屏带宽；163KB 首包从「点击后加载」变「页面加载后后台预取」，
          用户点击搜索时 script 通常已就绪，首次打开从等待加载变成直接开。 -->

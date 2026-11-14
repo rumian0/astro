@@ -77,6 +77,46 @@ astro-gyoza/
 
 ## 迁移记录
 
+### 2026-11-14 - Lighthouse 性能优化：favicon 瘦身 + 渲染阻塞 CSS 异步 + Hero 去 React 水合
+
+**背景：** 用户提供 Lighthouse 13.5.0 报告（测 https://mingcy.cn/），性能 79 分，总载荷 3,407 KiB。Speed Index 12335ms（全站最惨）、FCP/LCP 3042ms。用户决策：P0 做（favicon 重做为压缩 SVG）、P1 第 2 点做（渲染阻塞 CSS 改异步）、P1 第 4 点做（Hero 动画改纯 CSS，不行可回退）、P2/P3 不做；部署是 EdgeOne Pages（非 Vercel）。
+
+**核心症结（报告关键数字）：**
+
+- `favicon.svg` 一个文件 2,613,755 字节（2.5MiB，占总载荷 76%）。定位到 `public/favicon.svg` 是把 2141×1957 全分辨率 PNG 转 base64 塞进 SVG `<image xlink:href="data:image/png;base64,...">`，3,466,764 字节 / 45,021 行。
+- 渲染阻塞 CSS 7 个文件（render-blocking，预计省 520ms）：`/fancybox/fancybox.min.css`、`/pagefind/pagefind-ui.css`、`/fclite/fclite.css` + 4 个 `_astro/*`。
+- LCP 元素是首页 Hero 描述文字（TTFB 565ms + elementRenderDelay 2628ms）；bootup-time 含 framer-motion 相关 chunk（motion.js 19KB、SVGVisualElement.js 19KB）。
+- 其余：http/1.1 降级、mcy.png 显示尺寸小于实际、背景图缓存 1h、Vercel 404、umami 双脚本——均属 P2/P3，本次未动。
+
+**修改文件：**
+
+- `public/favicon.svg`（重做为压缩位图版 SVG）
+- `src/layouts/Layout.astro`（三个库 CSS 异步加载）
+- `src/components/hero/SocialList.astro`（新建，替换 SocialList.tsx）
+- `src/components/hero/SocialList.tsx`（删除）
+- `src/components/hero/Hero.astro`（改用默认导入 SocialList.astro、移除 client:load）
+
+**改动内容：**
+
+1. **favicon 瘦身（3,466,764 B → 35,269 B，-99%）**：位图照片/插画无法真正矢量化，用户选择「方案 A 压缩位图版」。用 Pillow 把内嵌 PNG（已解码到 2141×1957）缩到 512×468、WebP quality 80 method 6，重新 base64 嵌入 SVG 壳 `viewBox="0 0 512 468"` + `<image width="512" height="468" xlink:href="data:image/webp;base64,..."/>`。外观与原来一致（同一头像插画）。
+
+2. **渲染阻塞 CSS 改异步**（`Layout.astro` 第 48/50/52 行三个库样式）：
+   - `/fclite/fclite.css`（只有 /links/fcircle 友圈页用）、`/fancybox/fancybox.min.css`（只有相册页 + 文章图片灯箱用）、`/pagefind/pagefind-ui.css`（只在打开搜索框用）三个文件改为 `media="print"` + `onload="this.setAttribute('media', 'all')"` 异步模式，各配 `<noscript>` 兜底。
+   - 浏览器 head 里照常立即下载（异步不延迟下载），但不阻塞首屏渲染；Swup 切页后 fclite/fancybox 样式几乎总是已就绪，不白屏。
+   - `_astro/*` 站点本体 CSS **不动**（异步会全站闪版，得不偿失）。
+   - ⚠️ 坑：`onload="this.media='all'"` 里的裸 `media` 标识符触发 astro check 的 ts(6133) hint（「'media' declared but never read」误报），改用 `this.setAttribute('media', 'all')` 消除。
+
+3. **Hero 去 React 水合（SocialList）**：查证 Hero 区动画大部分已是纯 CSS（标题 shimmer、头像光环都是 CSS keyframes），唯一用 framer-motion 的是 `SocialList.tsx`（社交图标逐个上浮淡入，`client:load` 水合）。改为 `SocialList.astro` 纯 CSS stagger 动画：每个图标按 index 递增 0.1s `animation-delay`，`opacity 0→1 + translateY 40px→0`（0.5s ease-out forwards），参数与原来 framer-motion `itemVariants` 完全一致；含 `prefers-reduced-motion` 降级（直接显示终态）。Hero 不再水合 React。站点其它组件（BackToTopFAB 等）仍用 framer-motion，未动。
+   - ⚠️ 坑：`.astro` 组件是默认导出，`Hero.astro` 应写 `import SocialList from './SocialList.astro'`（非 `import { SocialList }`），否则报 ts(2614)。
+
+**验证：** `astro check` 118 files / 0 errors / 0 warnings / 0 hints；`astro build` 305 pages Complete（23.38s）。dist 核验：`dist/favicon.svg` 35,269 B；`dist/index.html` 含 `media="print"` + `setAttribute('media','all')` 各 3 处、fclite/fancybox/pagefind CSS 正常；`social-list__item` ×5（5 个社交图标 stagger）、`client:load` 在 Hero 里 0 处、`social-item-in` keyframes 生效。
+
+**注意：**
+
+- ① 本环境构建命令需要 `danger-full-access`：vite 加载 Astro 配置时要 spawn 子进程解析路径，沙箱命名管道限制会 EPERM。这是环境边界，不影响产物。
+- ② P1#4 若想回退：`git restore src/components/hero/SocialList.tsx` + 还原 `Hero.astro` 两处即可，效果是 CSS 版，观感与原来一致。
+- ③ Lighthouse 报告里其余项（http/1.1 降级、mcy.png 转 webp、背景图缓存、Vercel 404、umami 双脚本、foreverblog logo 比例）按用户决策 P2/P3 未做。
+
 ### 2026-10-10 - 页底仓库地址更新 + 搜索框首包慢优化（preload hint + hover 预加载）
 
 **背景：** 两个诉求：①新博客主题已开源到 `rumian0/astro-mingcy`，页底「Designed by MingCY」的 GitHub 链接还指向旧仓库 `rumian0/astro`，让访客去新仓库拿同款模板；②每次打开搜索框都很慢，跟之前 CDN 版不一样。
